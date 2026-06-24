@@ -141,6 +141,56 @@ export async function fetchTopSeries(limit = 18): Promise<NuvioMovie[]> {
   }
 }
 
+/**
+ * Search movies by name using the Cinemeta search extra.
+ */
+export async function searchMovies(
+  query: string,
+  limit = 12
+): Promise<NuvioMovie[]> {
+  if (!query.trim()) return [];
+  try {
+    const res = await fetch(
+      `${NUVIO_API}/catalog/movie/cinemeta___top/search=${encodeURIComponent(
+        query.trim()
+      )}.json`,
+      { next: { revalidate: 600 } }
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as { metas: CinemetaMeta[] };
+    const metas = data.metas ?? [];
+    const movies: NuvioMovie[] = metas
+      .filter((m) => m.background && m.poster)
+      .map(mapMeta);
+    return movies.slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch trending anime from the Kitsu catalog.
+ */
+export async function fetchTrendingAnime(
+  limit = 18
+): Promise<NuvioMovie[]> {
+  try {
+    const res = await fetch(
+      `${NUVIO_API}/catalog/anime/animekitsu___kitsu-anime-trending.json`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as { metas: CinemetaMeta[] };
+    const metas = data.metas ?? [];
+    const anime: NuvioMovie[] = metas
+      .filter((m) => m.background && m.poster)
+      .map(mapMeta);
+    return anime.slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
 /** Genres offered by the Cinemeta movie catalog (for the browser filter). */
 export const MOVIE_GENRES = [
   "Action",

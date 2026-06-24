@@ -1,4 +1,3 @@
-import { Navbar } from "@/components/nuvio/navbar";
 import { NuvioMovieSections } from "@/components/nuvio/nuvio-movie-sections";
 import { Stats } from "@/components/nuvio/stats";
 import { ChannelsGrid } from "@/components/nuvio/channels-grid";
@@ -15,45 +14,45 @@ import { Footer } from "@/components/nuvio/footer";
 import { ScrollUtilities } from "@/components/nuvio/scroll-utilities";
 import { MobileStickyCta } from "@/components/nuvio/mobile-sticky-cta";
 import { CookieConsent } from "@/components/nuvio/cookie-consent";
+import { Reveal } from "@/components/nuvio/reveal";
 import {
   fetchTopMovies,
   fetchTopSeries,
+  fetchTrendingAnime,
   fetchMoviesByGenre,
 } from "@/lib/nuvio";
 
-// Fetch server-side with ISR. All data reads from the stable Stremio API
-// (read-only client); never touches the Nuvio backend.
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  // Parallel fetches for speed.
-  const [movies, series, initialGenreMovies] = await Promise.all([
+  const [movies, series, anime, initialGenreMovies] = await Promise.all([
     fetchTopMovies(20),
     fetchTopSeries(18),
+    fetchTrendingAnime(18),
     fetchMoviesByGenre("Action", 18),
   ]);
 
   return (
     <>
       <ScrollUtilities />
-      <Navbar />
       <main className="flex-1">
         <NuvioMovieSections
           movies={movies}
           series={series}
+          anime={anime}
           initialGenreMovies={initialGenreMovies}
         />
-        <Stats />
-        <ChannelsGrid />
-        <HowItWorks />
-        <AppPreview movies={movies} />
-        <Devices />
-        <PriceComparison />
-        <ComparisonTable />
-        <PricingTiers />
-        <Reviews />
-        <Faq />
-        <FinalCta />
+        <Reveal><Stats /></Reveal>
+        <Reveal><ChannelsGrid /></Reveal>
+        <Reveal><HowItWorks /></Reveal>
+        <Reveal><AppPreview movies={movies} /></Reveal>
+        <Reveal><Devices /></Reveal>
+        <Reveal><PriceComparison /></Reveal>
+        <Reveal><ComparisonTable /></Reveal>
+        <Reveal><PricingTiers /></Reveal>
+        <Reveal><Reviews /></Reveal>
+        <Reveal><Faq /></Reveal>
+        <Reveal><FinalCta /></Reveal>
       </main>
       <Footer />
       <MobileStickyCta />

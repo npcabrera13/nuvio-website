@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Menu, X, Play } from "lucide-react";
+import { SearchBar } from "@/components/nuvio/search-bar";
+import type { NuvioMovie } from "@/lib/nuvio";
 
 const NAV_LINKS = [
   { label: "Features", href: "#features" },
@@ -10,7 +12,11 @@ const NAV_LINKS = [
   { label: "FAQ", href: "#faq" },
 ];
 
-export function Navbar() {
+interface NavbarProps {
+  onOpenMovie?: (m: NuvioMovie) => void;
+}
+
+export function Navbar({ onOpenMovie }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -63,6 +69,7 @@ export function Navbar() {
 
         {/* Desktop CTAs */}
         <div className="hidden lg:flex items-center gap-3">
+          <SearchBar onOpenMovie={onOpenMovie} />
           <a
             href="#login"
             className="px-4 py-2.5 text-sm font-semibold text-foreground/90 hover:text-foreground transition-colors"
@@ -78,8 +85,9 @@ export function Navbar() {
           </a>
         </div>
 
-        {/* Mobile: primary CTA + hamburger */}
+        {/* Mobile: search + primary CTA + hamburger */}
         <div className="flex items-center gap-2 lg:hidden">
+          <SearchBar onOpenMovie={onOpenMovie} />
           <a
             href="#trial"
             className="nuvio-gradient-bg inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white active:scale-95 transition-transform"

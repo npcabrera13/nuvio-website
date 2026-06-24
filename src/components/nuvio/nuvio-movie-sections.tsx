@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import type { NuvioMovie } from "@/lib/nuvio";
+import { Navbar } from "@/components/nuvio/navbar";
 import { Hero } from "@/components/nuvio/hero";
 import { MovieRow } from "@/components/nuvio/movie-row";
 import { SeriesRow } from "@/components/nuvio/series-row";
+import { AnimeRow } from "@/components/nuvio/anime-row";
 import { GenreBrowser } from "@/components/nuvio/genre-browser";
 import { MovieModal } from "@/components/nuvio/movie-modal";
 
 interface NuvioMovieSectionsProps {
   movies: NuvioMovie[];
   series: NuvioMovie[];
-  /** Pre-fetched movies for the first genre (Action) — avoids a loading flash. */
+  anime: NuvioMovie[];
   initialGenreMovies: NuvioMovie[];
 }
 
@@ -23,15 +25,18 @@ interface NuvioMovieSectionsProps {
 export function NuvioMovieSections({
   movies,
   series,
+  anime,
   initialGenreMovies,
 }: NuvioMovieSectionsProps) {
   const [selected, setSelected] = useState<NuvioMovie | null>(null);
 
   return (
     <>
+      <Navbar onOpenMovie={setSelected} />
       <Hero movies={movies} onOpenMovie={setSelected} />
       <MovieRow movies={movies} onOpenMovie={setSelected} />
       <SeriesRow series={series} onOpenMovie={setSelected} />
+      <AnimeRow anime={anime} onOpenMovie={setSelected} />
       <GenreBrowser
         initialMovies={initialGenreMovies}
         onOpenMovie={setSelected}

@@ -165,3 +165,57 @@ Unresolved issues or risks:
   - Wire the genre browser to update the URL hash so genre selections are shareable/bookmarkable.
   - Add keyboard navigation (arrow keys) for the movie/series rows.
   - Add a lead-capture email form in the Final CTA (collects emails for the trial, stored via a new API route + Prisma).
+
+---
+Task ID: 4
+Agent: Z.ai Code (webDevReview cron — round 4)
+Task: Recurring QA + enhancement round. Assess project status, perform agent-browser QA, fix bugs if any, then implement next-phase enhancements. Strict no-backend rule still applies.
+
+Work Log:
+- Read worklog.md and reviewed round 3's completed state (16 sections + 3 overlay utilities + cookie banner + genre browser + series row + comparison table + trailer in modal).
+- Performed fresh QA: dev.log healthy (GET / 200), lint clean, Stremio API HTTP 200 application/json, agent-browser opened the page with zero errors.
+- QA RESULT: stable, zero bugs. Picked up the next recommended items: search bar, anime section, lead-capture email form, and scroll-reveal animations.
+- Verified the Stremio API supports the needed data: anime catalog (50 titles including Attack on Titan, Boku no Hero Academia, One Punch Man) and search (`search=batman.json` → 21 results).
+- Extended the data layer (`src/lib/nuvio.ts`):
+  - Added `searchMovies(query, limit)` — reads `catalog/movie/cinemeta___top/search={query}.json`.
+  - Added `fetchTrendingAnime(limit)` — reads `catalog/anime/animekitsu___kitsu-anime-trending.json`.
+- Created two new API routes:
+  - `src/app/api/search/route.ts` (GET `/api/search?q=batman&limit=12`) — server-side search via Stremio Cinemeta.
+  - `src/app/api/leads/route.ts` (POST `/api/leads`) — email lead capture, stores in Prisma SQLite. Upsert to avoid duplicate errors. Validates email format.
+- Extended the Prisma schema with a `Lead` model (email, source, createdAt). Ran `bun run db:push` to sync.
+- Built 5 new feature components:
+  1. `search-bar.tsx` — modal search overlay (triggered from navbar), debounced fetch (350ms), AbortController-cancellable, results with poster thumbnails + ratings, ESC to close, ⌘K hint. Works on both desktop and mobile.
+  2. `anime-row.tsx` — Netflix-style horizontal anime row with "ANIME" fuchsia badges, scroll arrows, click-to-open-modal. Fetches 18 trending anime from Kitsu.
+  3. `final-cta.tsx` (rewritten) — interactive email capture form with validation, loading spinner, success state ("You're on the list!" with CheckCircle), and Prisma-backed email storage.
+  4. `reveal.tsx` — scroll-reveal animation wrapper using IntersectionObserver. Wraps each server-side section in page.tsx for staggered fade-in-up on scroll.
+  5. Updated `navbar.tsx` to accept `onOpenMovie` prop and include `<SearchBar>` in both desktop and mobile nav areas.
+- Refactored `nuvio-movie-sections.tsx` orchestrator: now includes Navbar (moved from page.tsx), SeriesRow, AnimeRow, and passes anime data.
+- Updated `page.tsx`: removed Navbar (now in orchestrator), added `fetchTrendingAnime`, wrapped all server-rendered sections in `<Reveal>` for scroll animations.
+- Re-verified with agent-browser:
+  - Page loads, no errors, no console warnings.
+  - Search: clicking "Search titles" opens overlay, typing "batman" returns "The Batman" and "Batman Begins" results. API route `/api/search?q=avengers` returns 5 Avengers movies.
+  - Anime section: "Trending Anime" heading visible, 18 ANIME badges rendered in DOM (verified via eval), "Attack on Titan" with "View details" button visible.
+  - Email form: filled "test@example.com", clicked "Start Free Trial" → success state "You're on the list!" shown. Verified lead stored in SQLite DB (`email='test@example.com', source='landing_page'`).
+  - Scroll-reveal: `<Reveal>` wrappers on all sections with 700ms fade-in-up transition.
+  - VLM QA on anime crop: anime titles visible (noted VLM missed small ANIME badge text in screenshot but DOM confirmed 18 badges present). VLM on CTA/footer: confirmed success message visible.
+  - Lint clean, dev server healthy, Stremio API HTTP 200 application/json (100% untouched).
+
+Stage Summary:
+- The Nuvio landing page now has 18 content sections (up from 16): added Trending Anime row and an interactive email-capture Final CTA.
+- New interactive capabilities: (1) Global search overlay in navbar that queries the Stremio catalog by title; (2) Anime row with 18 trending titles from Kitsu; (3) Email lead capture form with full validation, loading states, success confirmation, and Prisma database storage.
+- Scroll-reveal animations now apply to all sections for a polished entry experience.
+- Two new API routes: `/api/search` (read-only Stremio catalog search) and `/api/leads` (email lead capture with Prisma).
+- **The Stremio API remains 100% untouched.** Verified post-changes: `manifest.json` → HTTP 200 application/json.
+
+Unresolved issues or risks:
+- None blocking. All new features verified working.
+- The email form currently stores leads locally (SQLite). For production, an admin dashboard or email notification webhook should be added.
+- Recommended next-phase enhancements (for the next webDevReview round):
+  - Add an admin dashboard at `/api/leads` GET to view collected leads.
+  - Add `next/image` optimization (configure remotePatterns for images.metahub.space, i.ytimg.com).
+  - Add keyboard navigation (arrow keys) for movie/series/anime rows.
+  - Add a "New & Trending" section using RT Certified Fresh or featured catalogs.
+  - Wire the genre browser to update the URL hash for shareable genre links.
+  - Add Open Graph meta image generation (og-image) using next/og.
+  - Add a PWA manifest for mobile home-screen installation.
+  - Add ARIA live region announcements for search results and form submissions.
