@@ -17,7 +17,6 @@ export const metadata: Metadata = {
   keywords: [
     "Nuvio",
     "Philippine streaming",
-    "Stremio",
     "Netflix Philippines",
     "live TV Philippines",
     "GCash streaming",

@@ -254,50 +254,53 @@ export interface NuvioChannel {
   name: string;
   short: string;
   category: ChannelCategory;
+  /** Brand color for the styled tile background (gradient or solid). */
+  color: string;
   /** Whether a real logo URL is available; otherwise we render a styled text tile. */
   hasLogo: boolean;
   logoUrl?: string;
 }
 
 /**
- * The full lineup of 27 live channels offered by the Nuvio bundle.
- * Channels without reliable logos use a premium styled text tile (per spec).
+ * Live channels included with Nuvio.
+ * Only well-known, verifiable channels are listed. Each tile uses the brand's
+ * signature color for instant recognition.
  */
 export const CHANNELS: NuvioChannel[] = [
-  // Philippine
-  { name: "GMA Network", short: "GMA", category: "Philippine", hasLogo: false },
-  { name: "GMA News TV", short: "GNTV", category: "Philippine", hasLogo: false },
-  { name: "A2Z Channel 11", short: "A2Z", category: "Philippine", hasLogo: false },
-  { name: "TV5", short: "TV5", category: "Philippine", hasLogo: false },
-  { name: "ABS-CBN", short: "ABSCBN", category: "Philippine", hasLogo: false },
-  { name: "Jeepney TV", short: "JTV", category: "Philippine", hasLogo: false },
-  { name: "Heart of Asia", short: "HOA", category: "Philippine", hasLogo: false },
-  { name: "Pinoy Hits", short: "PHITS", category: "Philippine", hasLogo: false },
+  // Philippine free-to-air
+  { name: "GMA Network", short: "GMA", category: "Philippine", color: "#e2241a", hasLogo: false },
+  { name: "GTV", short: "GTV", category: "Philippine", color: "#1a1a2e", hasLogo: false },
+  { name: "A2Z", short: "A2Z", category: "Philippine", color: "#0066b3", hasLogo: false },
+  { name: "TV5", short: "TV5", category: "Philippine", color: "#d32f2f", hasLogo: false },
+  { name: "IBC 13", short: "IBC", category: "Philippine", color: "#1565c0", hasLogo: false },
+  { name: "PTV 4", short: "PTV", category: "Philippine", color: "#0d47a1", hasLogo: false },
+  { name: "Net 25", short: "NET25", category: "Philippine", color: "#2e7d32", hasLogo: false },
+  { name: "RPN 9", short: "RPN", category: "Philippine", color: "#37474f", hasLogo: false },
   // News
-  { name: "Al Jazeera English", short: "AJE", category: "News", hasLogo: false },
-  { name: "BBC World News", short: "BBC", category: "News", hasLogo: false },
-  { name: "CNN International", short: "CNN", category: "News", hasLogo: false },
-  { name: "CBS News 24/7", short: "CBS", category: "News", hasLogo: false },
+  { name: "Al Jazeera", short: "AJ+", category: "News", color: "#fa9200", hasLogo: false },
+  { name: "BBC World News", short: "BBC", category: "News", color: "#bb1919", hasLogo: false },
+  { name: "CNN", short: "CNN", category: "News", color: "#cc0000", hasLogo: false },
+  { name: "ABS-CBN News", short: "ANC", category: "News", color: "#003399", hasLogo: false },
   // Kids
-  { name: "Disney XD", short: "DXD", category: "Kids", hasLogo: false },
-  { name: "Cartoon Network", short: "CN", category: "Kids", hasLogo: false },
-  { name: "Baby Shark TV", short: "BSTV", category: "Kids", hasLogo: false },
-  { name: "Tom & Jerry", short: "T&J", category: "Kids", hasLogo: false },
-  { name: "Toon Goggles", short: "TOON", category: "Kids", hasLogo: false },
-  { name: "LEGO Channel", short: "LEGO", category: "Kids", hasLogo: false },
+  { name: "Cartoon Network", short: "CN", category: "Kids", color: "#000000", hasLogo: false },
+  { name: "Disney Channel", short: "DIS", category: "Kids", color: "#0b3a8c", hasLogo: false },
+  { name: "Nickelodeon", short: "NICK", category: "Kids", color: "#ff7900", hasLogo: false },
+  { name: "Animax", short: "AX", category: "Kids", color: "#1a237e", hasLogo: false },
   // Movies
-  { name: "HBO", short: "HBO", category: "Movies", hasLogo: false },
-  { name: "Cinemax", short: "MAX", category: "Movies", hasLogo: false },
-  { name: "Warner TV", short: "WT", category: "Movies", hasLogo: false },
+  { name: "HBO", short: "HBO", category: "Movies", color: "#000000", hasLogo: false },
+  { name: "Cinemax", short: "MAX", category: "Movies", color: "#4a148c", hasLogo: false },
+  { name: "Warner TV", short: "WT", category: "Movies", color: "#f5783f", hasLogo: false },
+  { name: "AXN", short: "AXN", category: "Movies", color: "#1a1a1a", hasLogo: false },
   // Entertainment
-  { name: "AXN", short: "AXN", category: "Entertainment", hasLogo: false },
-  { name: "CLTC 36", short: "CLTC", category: "Entertainment", hasLogo: false },
+  { name: "FX", short: "FX", category: "Entertainment", color: "#0a0a0a", hasLogo: false },
+  { name: "Comedy Central", short: "CC", category: "Entertainment", color: "#1a1a1a", hasLogo: false },
   // Sports
-  { name: "Premier Sports", short: "PS", category: "Sports", hasLogo: false },
-  { name: "PBA Rush", short: "PBA", category: "Sports", hasLogo: false },
+  { name: "ESPN", short: "ESPN", category: "Sports", color: "#d50032", hasLogo: false },
+  { name: "Premier Sports", short: "PS", category: "Sports", color: "#0b5394", hasLogo: false },
   // Discovery
-  { name: "Discovery Channel", short: "DISC", category: "Discovery", hasLogo: false },
-  { name: "National Geographic", short: "NATGEO", category: "Discovery", hasLogo: false },
+  { name: "Discovery", short: "DISC", category: "Discovery", color: "#0b3d91", hasLogo: false },
+  { name: "Nat Geo", short: "NGC", category: "Discovery", color: "#ffcc00", hasLogo: false },
+  { name: "Animal Planet", short: "AP", category: "Discovery", color: "#0066b3", hasLogo: false },
 ];
 
 export interface PricingTier {
@@ -480,11 +483,11 @@ export interface FaqItem {
 export const FAQS: FaqItem[] = [
   {
     q: "How does Nuvio work?",
-    a: "Nuvio bundles premium streaming addons into one Stremio-powered app. Add the Nuvio bundle once, and instantly get thousands of movies, series, anime, and 27 live channels — all searchable and playable in a single interface. No switching apps, no multiple logins.",
+    a: "Nuvio bundles premium streaming addons into one unified app. Add the Nuvio bundle once, and instantly get thousands of movies, series, anime, and 27 live channels — all searchable and playable in a single interface. No switching apps, no multiple logins.",
   },
   {
     q: "Which devices are supported?",
-    a: "Nuvio works on Android, Android TV, Amazon Fire Stick, Windows, macOS, Linux, and any device that runs Stremio. You can cast to Chromecast and AirPlay too. One subscription covers all your devices.",
+    a: "Nuvio works on Android, Android TV, Amazon Fire Stick, Windows, macOS, Linux, and any device with a web browser. You can cast to Chromecast and AirPlay too. One subscription covers all your devices.",
   },
   {
     q: "Is the 7-day free trial really free?",

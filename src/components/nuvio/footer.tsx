@@ -78,7 +78,7 @@ export function Footer() {
                 alt="Nuvio"
                 width={36}
                 height={36}
-                className="h-9 w-9 rounded-lg object-cover ring-1 ring-white/10"
+                className="h-9 w-9 rounded-lg object-contain p-0.5 ring-1 ring-white/10 bg-background"
               />
               <span className="text-xl font-bold tracking-tight">Nuvio</span>
             </a>
@@ -177,7 +177,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-6">
           <p className="text-xs text-muted-foreground text-center sm:text-left">
-            © {new Date().getFullYear()} Nuvio. All rights reserved. Powered by Stremio. Made in the Philippines.
+            © {new Date().getFullYear()} Nuvio. All rights reserved. Made in the Philippines.
           </p>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">

@@ -214,7 +214,7 @@ export function SearchBar({ onOpenMovie }: SearchBarProps) {
 
             {/* Footer hint */}
             <div className="border-t border-white/10 px-4 py-2 flex items-center justify-between text-[10px] text-muted-foreground/60">
-              <span>Powered by Stremio</span>
+              <span>Powered by Nuvio</span>
               <span className="flex items-center gap-2">
                 <kbd className="inline-flex h-4 items-center rounded border border-white/10 bg-white/5 px-1 font-mono">
                   ESC

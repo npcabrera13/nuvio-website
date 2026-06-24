@@ -8,8 +8,23 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Avoid hydration mismatch — only render the icon after mount.
+  // Avoid hydration mismatch — render a consistent button until mounted.
+  // next-themes sets the class on <html> before hydration, so `theme` can
+  // differ between server and client on first render.
   useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    // Server + initial client render: static placeholder, no theme-dependent attrs
+    return (
+      <button
+        type="button"
+        aria-label="Toggle theme"
+        className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-foreground"
+      >
+        <Moon className="h-4 w-4" />
+      </button>
+    );
+  }
 
   const isDark = theme === "dark";
 
@@ -20,13 +35,7 @@ export function ThemeToggle() {
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-foreground hover:bg-white/10 active:scale-95 transition"
     >
-      {!mounted ? (
-        <span className="h-4 w-4" />
-      ) : isDark ? (
-        <Sun className="h-4 w-4" />
-      ) : (
-        <Moon className="h-4 w-4" />
-      )}
+      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </button>
   );
 }

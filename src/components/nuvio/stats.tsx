@@ -19,11 +19,10 @@ const STATS: Stat[] = [
 
 function useCountUp(target: number, durationMs = 1600, decimals = 0) {
   const [val, setVal] = useState(0);
-  const started = useRef(false);
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
+    // Don't animate when target is 0 (not visible yet)
+    if (target <= 0) return;
     let raf = 0;
     const start = performance.now();
     const tick = (now: number) => {
@@ -42,6 +41,7 @@ function useCountUp(target: number, durationMs = 1600, decimals = 0) {
 }
 
 function StatCard({ stat, active }: { stat: Stat; active: boolean }) {
+  // Pass the real value only when active; 0 otherwise (effect skips animation for 0)
   const display = useCountUp(active ? stat.value : 0, 1600, stat.decimals ?? 0);
   return (
     <div className="text-center">
@@ -71,7 +71,7 @@ export function Stats() {
           obs.disconnect();
         }
       },
-      { threshold: 0.3 }
+      { threshold: 0.2 }
     );
     obs.observe(el);
     return () => obs.disconnect();

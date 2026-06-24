@@ -4,26 +4,6 @@ import { useState } from "react";
 import { CHANNELS, type ChannelCategory } from "@/lib/nuvio";
 import { Tv, Check } from "lucide-react";
 
-const CATEGORY_GRADIENT: Record<ChannelCategory, string> = {
-  Philippine: "from-rose-500/25 via-red-500/15 to-transparent",
-  News: "from-sky-500/25 via-blue-500/15 to-transparent",
-  Kids: "from-amber-400/25 via-orange-400/15 to-transparent",
-  Movies: "from-violet-500/25 via-purple-500/15 to-transparent",
-  Entertainment: "from-fuchsia-500/25 via-pink-500/15 to-transparent",
-  Sports: "from-emerald-500/25 via-green-500/15 to-transparent",
-  Discovery: "from-cyan-500/25 via-teal-500/15 to-transparent",
-};
-
-const CATEGORY_TEXT: Record<ChannelCategory, string> = {
-  Philippine: "text-rose-300",
-  News: "text-sky-300",
-  Kids: "text-amber-300",
-  Movies: "text-violet-300",
-  Entertainment: "text-fuchsia-300",
-  Sports: "text-emerald-300",
-  Discovery: "text-cyan-300",
-};
-
 const FILTERS: ("All" | ChannelCategory)[] = [
   "All",
   "Philippine",
@@ -49,7 +29,7 @@ export function ChannelsGrid() {
             Live TV included
           </p>
           <h2 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
-            All 27 Channels. One Price.
+            All {CHANNELS.length} Channels. One Price.
           </h2>
           <p className="mt-3 text-muted-foreground">
             From Philippine free-to-air favorites to global news, kids, movies and sports — every channel is included from day one.
@@ -82,27 +62,20 @@ export function ChannelsGrid() {
           {visible.map((c) => (
             <div
               key={c.name}
-              className="group relative aspect-[4/3] sm:aspect-square overflow-hidden rounded-2xl border border-white/10 bg-[#13131a] transition-all hover:border-white/20 hover:-translate-y-1"
+              className="group relative aspect-[4/3] sm:aspect-square overflow-hidden rounded-2xl border border-white/10 transition-all hover:border-white/20 hover:-translate-y-1"
+              style={{ backgroundColor: c.color }}
             >
-              {/* gradient wash */}
-              <div
-                className={`absolute inset-0 bg-gradient-to-br ${CATEGORY_GRADIENT[c.category]} opacity-80`}
-              />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.06),transparent_60%)]" />
+              {/* Sheen overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/30" />
 
               {/* Content */}
               <div className="relative h-full flex flex-col items-center justify-center p-3 text-center">
-                <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10 text-base sm:text-lg font-extrabold tracking-tight">
+                <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/20 text-base sm:text-lg font-extrabold tracking-tight text-white backdrop-blur-sm">
                   {c.short}
                 </div>
-                <p className="mt-2 text-[11px] sm:text-xs font-semibold leading-tight line-clamp-2">
+                <p className="mt-2 text-[11px] sm:text-xs font-semibold leading-tight line-clamp-2 text-white/90">
                   {c.name}
                 </p>
-                <span
-                  className={`mt-1.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${CATEGORY_TEXT[c.category]}`}
-                >
-                  {c.category}
-                </span>
               </div>
 
               {/* hover check */}

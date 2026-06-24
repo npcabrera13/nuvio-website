@@ -2,23 +2,54 @@
 
 import { useMemo, useState } from "react";
 import { Calculator, TrendingDown, ArrowRight, Check, Share2 } from "lucide-react";
+import { COMPETITOR_BRANDS, type BrandLogo } from "@/lib/nuvio";
 
 interface Subscription {
   name: string;
   monthly: number;
-  color: string;
+  brand: BrandLogo;
 }
 
+// Match brands to the COMPETITOR_BRANDS data for real logos
 const SUBSCRIPTIONS: Subscription[] = [
-  { name: "Netflix", monthly: 549, color: "bg-red-600" },
-  { name: "Disney+", monthly: 459, color: "bg-sky-500" },
-  { name: "HBO Max", monthly: 599, color: "bg-violet-600" },
-  { name: "Prime Video", monthly: 399, color: "bg-cyan-500" },
-  { name: "Apple TV+", monthly: 449, color: "bg-gray-200" },
-  { name: "Crunchyroll", monthly: 295, color: "bg-orange-500" },
-  { name: "Cignal TV", monthly: 650, color: "bg-amber-500" },
-  { name: "Sky Cable", monthly: 550, color: "bg-blue-500" },
+  { name: "Netflix", monthly: 549, brand: COMPETITOR_BRANDS.find((b) => b.name === "Netflix")! },
+  { name: "Disney+", monthly: 459, brand: COMPETITOR_BRANDS.find((b) => b.name === "Disney+")! },
+  { name: "HBO Max", monthly: 599, brand: COMPETITOR_BRANDS.find((b) => b.name === "HBO Max")! },
+  { name: "Prime Video", monthly: 399, brand: COMPETITOR_BRANDS.find((b) => b.name === "Prime Video")! },
+  { name: "Apple TV+", monthly: 449, brand: COMPETITOR_BRANDS.find((b) => b.name === "Apple TV+")! },
+  { name: "Crunchyroll", monthly: 295, brand: COMPETITOR_BRANDS.find((b) => b.name === "Crunchyroll")! },
+  { name: "Cignal TV", monthly: 650, brand: COMPETITOR_BRANDS.find((b) => b.name === "Cignal TV")! },
+  { name: "Sky Cable", monthly: 550, brand: COMPETITOR_BRANDS.find((b) => b.name === "Sky Cable")! },
 ];
+
+function BrandIcon({ brand }: { brand: BrandLogo }) {
+  if (brand.slug) {
+    return (
+      <img
+        src={`https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/${brand.slug}.svg`}
+        alt={`${brand.name} logo`}
+        loading="lazy"
+        className="nuvio-white-logo h-5 w-5"
+      />
+    );
+  }
+  if (brand.png) {
+    return (
+      <img
+        src={brand.png}
+        alt={`${brand.name} logo`}
+        loading="lazy"
+        className="nuvio-white-logo h-5 w-5"
+      />
+    );
+  }
+  // Text fallback for Cignal TV, Sky Cable
+  return (
+    <span className="text-[10px] font-bold text-foreground/70">
+      {brand.name.slice(0, 4)}
+    </span>
+  );
+}
 
 const NUVIO_MONTHLY = 49;
 
@@ -91,10 +122,8 @@ export function SavingsCalculator() {
                         : "border-white/10 bg-white/[0.02] hover:bg-white/5"
                     }`}
                   >
-                    <span
-                      className={`flex h-9 w-9 items-center justify-center rounded-xl ${s.color} text-xs font-bold text-white shadow-sm`}
-                    >
-                      {s.name.slice(0, 2)}
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10">
+                      <BrandIcon brand={s.brand} />
                     </span>
                     <span className="text-[11px] font-medium text-center leading-tight">
                       {s.name}

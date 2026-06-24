@@ -531,3 +531,36 @@ Unresolved issues or risks:
   - Add a contact/support form (reuse leads API with source='support').
   - Add a "forgot referral code" recovery (email-based, would need backend).
   - Add A/B testing for hero headline variants.
+
+---
+Task ID: 12
+Agent: Z.ai Code (user-reported bug fixes — round 12)
+Task: Fix 6 user-reported issues: (1) hydration mismatch error, (2) stats showing 0+, (3) logo cut off, (4) hallucinated channels + no icons, (5) app preview doesn't look realistic, (6) Stremio references should be removed, (7) calculator missing brand icons.
+
+Work Log:
+- Fixed all 7 user-reported issues:
+  1. **Hydration mismatch error (ThemeToggle)**: The `useTheme()` hook returns different values on server vs client, causing the aria-label to mismatch. Fixed by rendering a static placeholder button (aria-label="Toggle theme", Moon icon) until `mounted` is true. Server and initial client render now match. Verified: no hydration errors in console.
+  2. **Stats showing 0+**: The `useCountUp` hook had a `started` ref that prevented the effect from re-running when `active` changed from false to true (when the section scrolled into view). Removed the `started` guard — the effect now re-runs when `target` changes from 0 to the real value. Added an early return for `target <= 0` to skip animation when not visible. Verified: stats now show 10,000+, 27, 2,400+, 98%.
+  3. **Logo cut off**: Changed `object-cover` → `object-contain` + `p-0.5` padding + `bg-background` on the Nuvio logo in navbar, footer, and price-comparison. Verified: computed style is now `objectFit: contain`.
+  4. **Hallucinated channels + no icons**: Revised the channel list to only include well-known, verifiable channels (removed "Baby Shark TV", "Tom & Jerry", "Toon Goggles", "LEGO Channel", "CLTC 36", "Pinoy Hits", "Heart of Asia", "Jeepney TV", "PBA Rush" — these were likely fabricated). Replaced with real channels: GTV, IBC 13, PTV 4, Net 25, RPN 9, ABS-CBN News, Disney Channel, Nickelodeon, Animax, FX, Comedy Central, ESPN, Animal Planet. Each channel tile now uses its real brand color as the background (GMA red #e2241a, CNN red #cc0000, HBO black, BBC red #bb1919, etc.) with white abbreviation text — looks like real channel branding. Verified: 27 tiles with brand colors, VLM confirmed "colorful with distinct brand colors".
+  5. **App preview sucks**: Completely redesigned the 3 mockups as realistic phone frames (rounded border + notch + bottom nav bar with Home/Search/Movies/Live/Me icons). Each shows a real streaming app UI: (1) Browse with hero banner + 3x2 poster grid, (2) Stream picker with source list, (3) Live TV grid with colored channel bars. VLM confirmed "rounded phone frames with notches, resembling realistic phone screens".
+  6. **Stremio references removed**: Removed all "Stremio" mentions from user-facing copy: footer ("Powered by Stremio" → removed), search bar ("Powered by Stremio" → "Powered by Nuvio"), how-it-works ("your Stremio app" → "your app"), FAQ ("Stremio-powered app" → "unified app", "runs Stremio" → "with a web browser"), layout keywords. Verified: `document.body.textContent.includes('Stremio')` returns false.
+  7. **Calculator missing brand icons**: Replaced text abbreviations (first 2 letters) with real brand SVG logos from simple-icons CDN (Netflix, Prime Video, Apple TV+, Crunchyroll) + PNG logos (Disney+, HBO Max) + text fallback (Cignal TV, Sky Cable). Each subscription toggle now shows the real brand logo. VLM confirmed "real brand logos... Netflix, Disney+, HBO Max, Prime Video visible".
+- Re-verified with agent-browser:
+  - No hydration errors in console.
+  - Stats: 10,000+, 27, 2,400+, 98% (not 0+).
+  - Logo: object-contain (not cropped).
+  - Channels: 27 tiles with brand colors (GMA red, CNN red, HBO black, etc.).
+  - App preview: 3 phone frames with notch + bottom nav.
+  - No Stremio references in visible text.
+  - Calculator: 4 SVG logos + 2 PNG logos + 2 text fallbacks.
+  - Lint clean, Stremio API HTTP 200 application/json (100% untouched).
+
+Stage Summary:
+- Fixed all 7 user-reported issues. The landing page now has: correct hydration (no console errors), working stat counters, uncropped logo, accurate channel list with brand colors, realistic phone-frame app previews, no Stremio mentions, and real brand logos in the savings calculator.
+- **The Stremio API remains 100% untouched.** Verified post-fixes: `manifest.json` → HTTP 200 application/json.
+
+Unresolved issues or risks:
+- None blocking. All user-reported issues fixed and verified.
+- The channel list is now conservative (only well-known verifiable channels) — the exact channel lineup in the Nuvio bundle should be confirmed with the bundle owner.
+- Recommended next-phase enhancements: same as previous rounds (next/image migration, view-transitions, etc.).

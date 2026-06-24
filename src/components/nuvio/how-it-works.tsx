@@ -12,7 +12,7 @@ const STEPS = [
     n: "02",
     icon: Download,
     title: "Add the Nuvio bundle",
-    desc: "One tap adds the Nuvio bundle to your Stremio app. Instantly unlocks 10,000+ titles and 27 live channels.",
+    desc: "One tap adds the Nuvio bundle to your app. Instantly unlocks 10,000+ titles and 27 live channels.",
     accent: "from-fuchsia-500 to-pink-600",
   },
   {
