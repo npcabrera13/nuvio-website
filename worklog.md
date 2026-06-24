@@ -491,3 +491,43 @@ Unresolved issues or risks:
   - Add Open Graph image variant per movie (dynamic OG for shared movie links).
   - Add a contact/support form (reuse leads API or new /api/support route).
   - Add a referral program UI (generate shareable referral links).
+
+---
+Task ID: 11
+Agent: Z.ai Code (webDevReview cron — round 11)
+Task: Recurring QA + enhancement round. Assess project status, perform agent-browser QA, fix bugs if any, then implement next-phase enhancements. Strict no-backend rule still applies.
+
+Work Log:
+- Read worklog.md and reviewed round 10's completed state (21 sections + theme toggle + admin page + skeleton).
+- Performed fresh QA: dev.log healthy (GET / 200), lint clean, Stremio API HTTP 200 application/json, agent-browser opened with zero errors.
+- QA RESULT: stable. Noted a real QA issue from round 10's worklog: light theme had suboptimal contrast because ~190 `white/X` opacity classes render as invisible white-on-white in light mode. Fixed it this round.
+- Implemented 1 bug fix + 1 new feature:
+  1. **Bug fix: Light theme contrast** (`globals.css`): added a scoped CSS override that remaps all `bg-white/X` and `border-white/X` utility classes to dark-opacity equivalents (`rgba(20,20,28,X)`) in light mode (`:root:not(.dark)`). This is a global fix that automatically adapts all 190 existing usages without touching component code. Verified: `bg-white/5` now renders as `rgba(20,20,28,0.04)` in light theme (was invisible `rgba(255,255,255,0.05)`); `border-white/10` renders as `rgba(20,20,28,0.1)`. VLM confirmed: "Movie poster cards/borders are visible with distinct styling. Text is readable. UI properly uses light mode theming with dark overlays on light backgrounds instead of invisible white-on-white."
+  2. **Referral program section** (`referral.tsx`): generates a unique referral code (NUVRIO-XXXXXX) stored in localStorage (persists per browser), builds a shareable link (`/?ref=CODE`), and offers Copy + Share buttons (uses navigator.share with clipboard fallback). Shows 3 stats (7 days they get, 7 days you get, ∞ friends). VLM confirmed: referral code NUVRIO-ZP9C4K, link, copy/share buttons, 3 stats all visible and aligned.
+- Refactored globals.css: moved theme-aware definitions of `.nuvio-glass`, `.nuvio-card`, `.nuvio-grid-bg`, `.nuvio-white-logo`, `.mask-fade-x`, `.nuvio-divider` earlier in the file and removed duplicate definitions that were left over. All are now theme-aware (dark + `:root:not(.dark)` light variants).
+- Added the Referral section to page.tsx between Reviews and FAQ, wrapped in Reveal.
+- Re-verified with agent-browser:
+  - Page loads, no errors, no console warnings.
+  - Light theme contrast: `bg-white/5` → `rgba(20,20,28,0.04)`, `border-white/10` → `rgba(20,20,28,0.1)` in light mode. VLM confirmed cards/borders visible and readable.
+  - Referral: code NUVRIO-ZP9C4K generated + persisted, link `http://localhost:3000/?ref=NUVRIO-ZP9C4K`, Copy + Share buttons present. VLM confirmed clean layout.
+  - Lint clean, dev server healthy, Stremio API HTTP 200 application/json (100% untouched).
+
+Stage Summary:
+- The Nuvio landing page now has 22 content sections (up from 21): added Referral program.
+- Fixed a real contrast bug: the light theme is now fully usable — all white-opacity backgrounds/borders automatically adapt to dark-opacity in light mode via a single global CSS override (no component changes needed).
+- New growth feature: referral program with client-generated codes, shareable links, copy/share buttons, and a "give 7 days, get 7 days" value prop.
+- Theme system is now robust: both dark and light themes look polished with correct contrast.
+- **The Stremio API remains 100% untouched.** Verified post-changes: `manifest.json` → HTTP 200 application/json.
+
+Unresolved issues or risks:
+- None blocking. All features verified working in both themes.
+- The referral codes are client-generated (localStorage) — for production, a backend endpoint to track referrals + apply the 7-day bonus would be needed (but that's a backend concern, not touching the Stremio API).
+- Recommended next-phase enhancements (for the next webDevReview round):
+  - Migrate `<img>` to `next/image` in poster-heavy components (config already in place).
+  - Add page-transition animations with next/view-transitions.
+  - Add a "New & Trending" timestamp section highlighting recently added content with dates.
+  - Add a "watch trailer" inline mini-player on posters (without opening modal).
+  - Add Open Graph image variant per movie (dynamic OG for shared movie links).
+  - Add a contact/support form (reuse leads API with source='support').
+  - Add a "forgot referral code" recovery (email-based, would need backend).
+  - Add A/B testing for hero headline variants.

@@ -146,28 +146,206 @@
   }
 }
 
+/*
+ * Light-theme contrast fix: in light mode, white-opacity backgrounds and borders
+ * are invisible (white on white). This override remaps them to dark-opacity
+ * equivalents so all existing `bg-white/X` and `border-white/X` utilities
+ * automatically adapt to the light theme without changing component code.
+ */
+:root:not(.dark) {
+  --tw-white-override: 20, 20, 28;
+}
+:root:not(.dark) [class*="bg-white\/"] {
+  background-color: rgba(var(--tw-white-override), 0.06) !important;
+}
+:root:not(.dark) [class*="bg-white\/5"] {
+  background-color: rgba(var(--tw-white-override), 0.04) !important;
+}
+:root:not(.dark) [class*="bg-white\/10"] {
+  background-color: rgba(var(--tw-white-override), 0.07) !important;
+}
+:root:not(.dark) [class*="bg-white\/15"] {
+  background-color: rgba(var(--tw-white-override), 0.1) !important;
+}
+:root:not(.dark) [class*="bg-white\/20"] {
+  background-color: rgba(var(--tw-white-override), 0.13) !important;
+}
+:root:not(.dark) [class*="bg-white\/30"] {
+  background-color: rgba(var(--tw-white-override), 0.18) !important;
+}
+:root:not(.dark) [class*="bg-white\/40"] {
+  background-color: rgba(var(--tw-white-override), 0.22) !important;
+}
+:root:not(.dark) [class*="bg-white\/50"] {
+  background-color: rgba(var(--tw-white-override), 0.3) !important;
+}
+:root:not(.dark) [class*="bg-white\/60"] {
+  background-color: rgba(var(--tw-white-override), 0.4) !important;
+}
+:root:not(.dark) [class*="bg-white\/70"] {
+  background-color: rgba(var(--tw-white-override), 0.5) !important;
+}
+:root:not(.dark) [class*="bg-white\/80"] {
+  background-color: rgba(var(--tw-white-override), 0.6) !important;
+}
+:root:not(.dark) [class*="bg-white\/85"] {
+  background-color: rgba(var(--tw-white-override), 0.7) !important;
+}
+:root:not(.dark) [class*="border-white\/"] {
+  border-color: rgba(var(--tw-white-override), 0.1) !important;
+}
+:root:not(.dark) [class*="border-white\/5"] {
+  border-color: rgba(var(--tw-white-override), 0.06) !important;
+}
+:root:not(.dark) [class*="border-white\/10"] {
+  border-color: rgba(var(--tw-white-override), 0.1) !important;
+}
+:root:not(.dark) [class*="border-white\/15"] {
+  border-color: rgba(var(--tw-white-override), 0.13) !important;
+}
+:root:not(.dark) [class*="border-white\/20"] {
+  border-color: rgba(var(--tw-white-override), 0.15) !important;
+}
+:root:not(.dark) [class*="border-white\/30"] {
+  border-color: rgba(var(--tw-white-override), 0.2) !important;
+}
+
 /* ---------- Nuvio custom utilities ---------- */
 
-/* Brand gradient text */
-.nuvio-gradient-text {
-  background: linear-gradient(100deg, #a78bfa 0%, #ec4899 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+/*
+ * Theme-aware surface utilities.
+ * These switch between white-opacity (dark theme) and black-opacity (light theme)
+ * so card surfaces, borders, and overlays look correct in both themes.
+ * Usage: replace `bg-white/5` → `nuvio-surface-5`, `border-white/10` → `nuvio-border`,
+ * `bg-white/10` → `nuvio-surface-10`, etc.
+ */
+
+/* Borders: white/10 on dark, black/10 on light */
+.nuvio-border {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+:root:not(.dark) .nuvio-border {
+  border-color: rgba(20, 20, 28, 0.1);
+}
+.nuvio-border-strong {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+:root:not(.dark) .nuvio-border-strong {
+  border-color: rgba(20, 20, 28, 0.15);
 }
 
-/* Brand gradient background */
-.nuvio-gradient-bg {
-  background: linear-gradient(100deg, #7c3aed 0%, #ec4899 100%);
-}
+/* Surface backgrounds (use as bg-* replacement) */
+.nuvio-surface-5 { background-color: rgba(255, 255, 255, 0.05); }
+:root:not(.dark) .nuvio-surface-5 { background-color: rgba(20, 20, 28, 0.04); }
 
-/* Glass morphism */
+.nuvio-surface-10 { background-color: rgba(255, 255, 255, 0.1); }
+:root:not(.dark) .nuvio-surface-10 { background-color: rgba(20, 20, 28, 0.07); }
+
+.nuvio-surface-15 { background-color: rgba(255, 255, 255, 0.15); }
+:root:not(.dark) .nuvio-surface-15 { background-color: rgba(20, 20, 28, 0.1); }
+
+.nuvio-surface-20 { background-color: rgba(255, 255, 255, 0.2); }
+:root:not(.dark) .nuvio-surface-20 { background-color: rgba(20, 20, 28, 0.13); }
+
+.nuvio-surface-30 { background-color: rgba(255, 255, 255, 0.3); }
+:root:not(.dark) .nuvio-surface-30 { background-color: rgba(20, 20, 28, 0.18); }
+
+.nuvio-surface-40 { background-color: rgba(255, 255, 255, 0.4); }
+:root:not(.dark) .nuvio-surface-40 { background-color: rgba(20, 20, 28, 0.22); }
+
+.nuvio-surface-50 { background-color: rgba(255, 255, 255, 0.5); }
+:root:not(.dark) .nuvio-surface-50 { background-color: rgba(20, 20, 28, 0.3); }
+
+.nuvio-surface-60 { background-color: rgba(255, 255, 255, 0.6); }
+:root:not(.dark) .nuvio-surface-60 { background-color: rgba(20, 20, 28, 0.4); }
+
+.nuvio-surface-70 { background-color: rgba(255, 255, 255, 0.7); }
+:root:not(.dark) .nuvio-surface-70 { background-color: rgba(20, 20, 28, 0.5); }
+
+.nuvio-surface-80 { background-color: rgba(255, 255, 255, 0.8); }
+:root:not(.dark) .nuvio-surface-80 { background-color: rgba(20, 20, 28, 0.6); }
+
+.nuvio-surface-85 { background-color: rgba(255, 255, 255, 0.85); }
+:root:not(.dark) .nuvio-surface-85 { background-color: rgba(20, 20, 28, 0.7); }
+
+/* Hover surface variants */
+.nuvio-hover-surface-5:hover { background-color: rgba(255, 255, 255, 0.05); }
+:root:not(.dark) .nuvio-hover-surface-5:hover { background-color: rgba(20, 20, 28, 0.04); }
+
+.nuvio-hover-surface-10:hover { background-color: rgba(255, 255, 255, 0.1); }
+:root:not(.dark) .nuvio-hover-surface-10:hover { background-color: rgba(20, 20, 28, 0.07); }
+
+.nuvio-hover-surface-20:hover { background-color: rgba(255, 255, 255, 0.2); }
+:root:not(.dark) .nuvio-hover-surface-20:hover { background-color: rgba(20, 20, 28, 0.13); }
+
+/* Glass morphism (theme-aware) */
 .nuvio-glass {
   background: rgba(13, 13, 20, 0.72);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+:root:not(.dark) .nuvio-glass {
+  background: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(20, 20, 28, 0.08);
+}
+
+/* Premium card surface (theme-aware) */
+.nuvio-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+:root:not(.dark) .nuvio-card {
+  background: linear-gradient(180deg, rgba(20, 20, 28, 0.025) 0%, rgba(20, 20, 28, 0.005) 100%);
+  border: 1px solid rgba(20, 20, 28, 0.08);
+}
+
+/* Grid background (theme-aware) */
+.nuvio-grid-bg {
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+}
+:root:not(.dark) .nuvio-grid-bg {
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.1) 1px, transparent 1px);
+}
+
+/* Edge fade mask for marquees */
+.mask-fade-x {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+/* Gradient divider line between sections */
+.nuvio-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.3), rgba(236, 72, 153, 0.3), transparent);
+}
+
+/* White-washed brand logo (for competitor svgs) */
+.nuvio-white-logo {
+  filter: brightness(0) invert(1);
+  opacity: 0.7;
+}
+.nuvio-white-logo:hover {
+  opacity: 1;
+}
+:root:not(.dark) .nuvio-white-logo {
+  filter: brightness(0);
+  opacity: 0.6;
+}
+:root:not(.dark) .nuvio-white-logo:hover {
+  opacity: 0.9;
+}
+
+/* Brand gradient background */
+.nuvio-gradient-bg {
+  background: linear-gradient(100deg, #7c3aed 0%, #ec4899 100%);
 }
 
 /* Glow ring on focus for interactive elements */
@@ -182,22 +360,6 @@
 }
 .nuvio-no-scrollbar::-webkit-scrollbar {
   display: none;
-}
-
-/* Premium card surface */
-.nuvio-card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-/* Ambient grid background for hero */
-.nuvio-grid-bg {
-  background-image:
-    linear-gradient(rgba(124, 58, 237, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(124, 58, 237, 0.07) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
 }
 
 /* Floating animation for the down arrow / badges */
@@ -252,23 +414,4 @@
   animation: nuvio-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* White-washed brand logo (for competitor svgs) */
-.nuvio-white-logo {
-  filter: brightness(0) invert(1);
-  opacity: 0.7;
-}
-.nuvio-white-logo:hover {
-  opacity: 1;
-}
 
-/* Edge fade mask for marquees */
-.mask-fade-x {
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-}
-
-/* Gradient divider line between sections */
-.nuvio-divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.3), rgba(236, 72, 153, 0.3), transparent);
-}
