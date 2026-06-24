@@ -13,6 +13,7 @@ import { Faq } from "@/components/nuvio/faq";
 import { FinalCta } from "@/components/nuvio/final-cta";
 import { Footer } from "@/components/nuvio/footer";
 import { ScrollUtilities } from "@/components/nuvio/scroll-utilities";
+import { TableOfContents } from "@/components/nuvio/table-of-contents";
 import { MobileStickyCta } from "@/components/nuvio/mobile-sticky-cta";
 import { CookieConsent } from "@/components/nuvio/cookie-consent";
 import { Reveal } from "@/components/nuvio/reveal";
@@ -38,6 +39,7 @@ export default async function Home() {
   return (
     <>
       <ScrollUtilities />
+      <TableOfContents />
       <main className="flex-1">
         <NuvioMovieSections
           movies={movies}

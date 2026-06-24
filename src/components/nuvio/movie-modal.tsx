@@ -1,24 +1,26 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogClose,
 } from "@/components/ui/dialog";
-import { X, Star, Play, Clock, Calendar, Users, Film } from "lucide-react";
+import { X, Star, Play, Clock, Calendar, Users, Film, Sparkles } from "lucide-react";
 import type { NuvioMovie } from "@/lib/nuvio";
 import { LiteYouTube } from "@/components/nuvio/lite-youtube";
 
 interface MovieModalProps {
   movie: NuvioMovie | null;
   onClose: () => void;
+  onOpenMovie?: (m: NuvioMovie) => void;
 }
 
-export function MovieModal({ movie, onClose }: MovieModalProps) {
+export function MovieModal({ movie, onClose, onOpenMovie }: MovieModalProps) {
   return (
     <Dialog open={movie !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl gap-0 p-0 overflow-hidden border-white/10 bg-[#0d0d14] max-h-[92vh]">
-        {movie && <ModalBody movie={movie} />}
+        {movie && <ModalBody movie={movie} onOpenMovie={onOpenMovie} />}
         <DialogClose className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors ring-1 ring-white/15">
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>
@@ -28,7 +30,13 @@ export function MovieModal({ movie, onClose }: MovieModalProps) {
   );
 }
 
-function ModalBody({ movie }: { movie: NuvioMovie }) {
+function ModalBody({
+  movie,
+  onOpenMovie,
+}: {
+  movie: NuvioMovie;
+  onOpenMovie?: (m: NuvioMovie) => void;
+}) {
   return (
     <div className="overflow-y-auto max-h-[92vh] nuvio-no-scrollbar">
       {/* Backdrop hero */}
@@ -116,6 +124,11 @@ function ModalBody({ movie }: { movie: NuvioMovie }) {
           </div>
         )}
 
+        {/* More like this */}
+        {movie.genres.length > 0 && (
+          <MoreLikeThis movie={movie} onOpenMovie={onOpenMovie} />
+        )}
+
         {/* Included note */}
         <div className="mt-6 flex items-center gap-2.5 rounded-xl border border-green-500/20 bg-green-500/10 p-3">
           <Film className="h-4 w-4 text-green-400" />
@@ -133,6 +146,74 @@ function ModalBody({ movie }: { movie: NuvioMovie }) {
           <Play className="h-4 w-4 fill-current" />
           Start 7 Days Free to Watch
         </a>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Genre-based recommendations. Fetches movies from the current movie's first
+ * genre and shows up to 6 horizontal poster cards (excluding the current movie).
+ */
+function MoreLikeThis({
+  movie,
+  onOpenMovie,
+}: {
+  movie: NuvioMovie;
+  onOpenMovie?: (m: NuvioMovie) => void;
+}) {
+  const [recs, setRecs] = useState<NuvioMovie[]>([]);
+  const genre = movie.genres[0];
+
+  useEffect(() => {
+    if (!genre) return;
+    let cancelled = false;
+    fetch(`/api/movies?genre=${encodeURIComponent(genre)}&limit=12`)
+      .then((r) => r.json())
+      .then((d: { movies: NuvioMovie[] }) => {
+        if (cancelled) return;
+        // Exclude the current movie, take 6
+        const filtered = (d.movies ?? []).filter((m) => m.id !== movie.id).slice(0, 6);
+        setRecs(filtered);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [genre, movie.id]);
+
+  if (recs.length === 0) return null;
+
+  return (
+    <div className="mt-6">
+      <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+        <Sparkles className="h-3.5 w-3.5 text-pink-400" /> More {genre} movies
+      </p>
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+        {recs.map((m) => (
+          <button
+            key={m.id}
+            type="button"
+            onClick={() => onOpenMovie?.(m)}
+            aria-label={`View details for ${m.name}`}
+            className="group relative aspect-[2/3] overflow-hidden rounded-lg border border-white/10 bg-white/5 text-left"
+          >
+            <img
+              src={m.poster}
+              alt={m.name}
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 pt-4">
+              <p className="text-[9px] sm:text-[10px] font-semibold text-white line-clamp-2 leading-tight">
+                {m.name}
+              </p>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Play className="h-5 w-5 fill-white text-white" />
+            </div>
+          </button>
+        ))}
       </div>
     </div>
   );

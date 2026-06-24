@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Calculator, TrendingDown, ArrowRight, Check } from "lucide-react";
+import { Calculator, TrendingDown, ArrowRight, Check, Share2 } from "lucide-react";
 
 interface Subscription {
   name: string;
@@ -157,7 +157,24 @@ export function SavingsCalculator() {
 
             {/* Savings badge */}
             <div className="mt-auto pt-5">
-              <div className="rounded-2xl border border-green-500/30 bg-green-500/10 p-4 text-center">
+              <div className="relative rounded-2xl border border-green-500/30 bg-green-500/10 p-4 text-center">
+                {yearlySavings > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const text = `I'm saving ₱${yearlySavings.toLocaleString()}/year with Nuvio — all my streaming in one app for ₱49/month! 💜`;
+                      if (navigator.share) {
+                        navigator.share({ title: "Nuvio savings", text, url: window.location.href }).catch(() => {});
+                      } else {
+                        navigator.clipboard?.writeText(`${text} ${window.location.href}`).catch(() => {});
+                      }
+                    }}
+                    aria-label="Share your savings"
+                    className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-green-300 hover:bg-white/20 active:scale-95 transition"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
                 <p className="text-xs font-semibold uppercase tracking-wider text-green-300">
                   You save every year
                 </p>

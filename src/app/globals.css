@@ -228,3 +228,9 @@
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
 }
+
+/* Gradient divider line between sections */
+.nuvio-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.3), rgba(236, 72, 153, 0.3), transparent);
+}

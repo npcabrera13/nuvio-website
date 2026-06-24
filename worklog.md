@@ -353,3 +353,49 @@ Unresolved issues or risks:
   - Add a "New & Trending" timestamp section highlighting recently added content with dates.
   - Add a sticky table-of-contents nav on desktop (jump to sections).
   - Add genre-based "More like this" recommendations in the movie modal.
+
+---
+Task ID: 8
+Agent: Z.ai Code (webDevReview cron — round 8)
+Task: Recurring QA + enhancement round. Assess project status, perform agent-browser QA, fix bugs if any, then implement next-phase enhancements. Strict no-backend rule still applies.
+
+Work Log:
+- Read worklog.md and reviewed round 7's completed state (21 sections + savings calculator + footer newsletter + trailer autoplay).
+- Performed fresh QA: dev.log healthy (GET / 200), lint clean, Stremio API HTTP 200 application/json, agent-browser opened with zero errors, 16 level-2 headings present.
+- QA RESULT: stable, zero bugs. Picked up the next recommended items: "More like this" recommendations, sticky table-of-contents, savings share button, styling polish.
+- Implemented 4 enhancements:
+  1. **"More like this" recommendations in movie modal** (`movie-modal.tsx`): added a `MoreLikeThis` sub-component that fetches 6 movies from the current movie's first genre via `/api/movies?genre=...`. Shows horizontal poster cards (excluding the current movie). Clicking a recommendation opens that movie in the modal (chained navigation). VLM confirmed "More Biography Movies" section with posters (Song Sung Blue, Nuremberg, etc.).
+  2. **Sticky desktop table-of-contents** (`table-of-contents.tsx`): vertical nav fixed on the left side (xl+ screens only), appears after scrolling past the hero. 13 section links (Home, Movies, Browse, Channels, How it works, App preview, Devices, Compare, Calculator, Pricing, Reviews, FAQ, Get started). IntersectionObserver scroll-spy highlights the active section with a gradient pill. Clicking a link smooth-scrolls to that section. Verified: 13 links, "Movies" highlighted correctly, clicking "Channels" scrolled to y=5215.
+  3. **Savings calculator share button** (`savings-calculator.tsx`): added a Share2 icon button on the savings badge. Uses `navigator.share()` when available (mobile/native), falls back to `navigator.clipboard.writeText()`. Shares "I'm saving ₱X/year with Nuvio — all my streaming in one app for ₱49/month! 💜" + URL. Verified: share button visible.
+  4. **Styling polish**: added `.nuvio-divider` gradient line utility to globals.css for future section dividers. Fixed the `/api/movies` route to accept any valid Cinemeta genre (not just the curated MOVIE_GENRES list) — this was needed because movies like "Michael" have genre "Biography" which wasn't in the validation list, causing the "More like this" fetch to return 400. Now uses a regex sanitization pattern instead.
+- Updated `movie-modal.tsx`: added `onOpenMovie` prop + `MoreLikeThis` component with useEffect fetch.
+- Updated `nuvio-movie-sections.tsx`: passes `openMovie` to the modal so recommendation clicks chain.
+- Updated `api/movies/route.ts`: removed strict MOVIE_GENRES validation, now accepts any alphabetic genre string (Biography, History, Sport, Western, Documentary, etc. all work).
+- Updated `page.tsx`: added `<TableOfContents />`.
+- Re-verified with agent-browser:
+  - Page loads, no errors, no console warnings (only Radix Dialog aria-describedby warning, cosmetic).
+  - More like this: opened Michael modal → "More Biography movies" section visible with 6 poster thumbnails. VLM confirmed.
+  - Table-of-contents: 13 links present, scroll-spy active section correct, clicking links scrolls to sections.
+  - Share button: visible in savings calculator.
+  - Lint clean, dev server healthy, Stremio API HTTP 200 application/json (100% untouched).
+
+Stage Summary:
+- The Nuvio landing page now has 21 content sections + a sticky desktop table-of-contents nav.
+- New discovery feature: "More like this" recommendations in the movie modal let users browse related titles without leaving the modal — clicking chains to the next movie.
+- New navigation aid: sticky TOC on xl+ screens with scroll-spy helps users jump to any section.
+- New virality: savings calculator share button lets users spread the value proposition on social media.
+- Fixed a bug: the /api/movies route was rejecting valid Cinemeta genres like "Biography" — now accepts any alphabetic genre.
+- **The Stremio API remains 100% untouched.** Verified post-changes: `manifest.json` → HTTP 200 application/json.
+
+Unresolved issues or risks:
+- None blocking. All features verified working.
+- The Radix Dialog warns about missing Description/aria-describedby — cosmetic only, doesn't affect functionality.
+- Recommended next-phase enhancements (for the next webDevReview round):
+  - Migrate `<img>` to `next/image` in poster-heavy components (config already in place).
+  - Add a password-protected admin dashboard to view/export collected leads.
+  - Add a dark/light theme toggle (currently dark-only).
+  - Add page-transition animations with next/view-transitions.
+  - Add a "New & Trending" timestamp section highlighting recently added content with dates.
+  - Add an admin GET /api/leads endpoint (password-protected) to view collected emails.
+  - Add keyboard shortcut help overlay (? key).
+  - Add a "watch trailer" button on movie posters in the rows (not just in modal).

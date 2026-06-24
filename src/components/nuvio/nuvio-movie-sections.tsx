@@ -57,7 +57,11 @@ export function NuvioMovieSections({
         initialMovies={initialGenreMovies}
         onOpenMovie={openMovie}
       />
-      <MovieModal movie={selected} onClose={() => setSelected(null)} />
+      <MovieModal
+        movie={selected}
+        onClose={() => setSelected(null)}
+        onOpenMovie={openMovie}
+      />
     </>
   );
 }
