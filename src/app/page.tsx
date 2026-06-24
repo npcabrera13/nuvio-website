@@ -16,6 +16,7 @@ import { ScrollUtilities } from "@/components/nuvio/scroll-utilities";
 import { TableOfContents } from "@/components/nuvio/table-of-contents";
 import { MobileStickyCta } from "@/components/nuvio/mobile-sticky-cta";
 import { CookieConsent } from "@/components/nuvio/cookie-consent";
+import { KeyboardHelp } from "@/components/nuvio/keyboard-help";
 import { Reveal } from "@/components/nuvio/reveal";
 import {
   fetchTopMovies,
@@ -64,6 +65,7 @@ export default async function Home() {
       <Footer />
       <MobileStickyCta />
       <CookieConsent />
+      <KeyboardHelp />
     </>
   );
 }

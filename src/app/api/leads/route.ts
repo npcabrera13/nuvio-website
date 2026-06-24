@@ -37,3 +37,48 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+/**
+ * GET /api/leads?key=<ADMIN_KEY>
+ *
+ * Admin endpoint to list collected leads. Password-protected via a query
+ * key compared against the ADMIN_KEY env var. Does NOT touch the Nuvio backend.
+ *
+ * Supports `?format=csv` to download as CSV.
+ */
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const key = searchParams.get("key");
+  const format = searchParams.get("format");
+  const adminKey = process.env.NUVIO_ADMIN_KEY ?? "nuvio-admin-2026";
+
+  if (key !== adminKey) {
+    return NextResponse.json(
+      { error: "Unauthorized. Provide a valid ?key= parameter." },
+      { status: 401 }
+    );
+  }
+
+  const leads = await db.lead.findMany({
+    orderBy: { createdAt: "desc" },
+    select: { email: true, source: true, createdAt: true },
+  });
+
+  if (format === "csv") {
+    const header = "email,source,createdAt\n";
+    const rows = leads
+      .map((l) => `${l.email},${l.source},${l.createdAt.toISOString()}`)
+      .join("\n");
+    return new NextResponse(header + rows, {
+      headers: {
+        "Content-Type": "text/csv",
+        "Content-Disposition": "attachment; filename=nuvio-leads.csv",
+      },
+    });
+  }
+
+  return NextResponse.json({
+    count: leads.length,
+    leads,
+  });
+}

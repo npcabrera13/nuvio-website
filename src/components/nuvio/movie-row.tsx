@@ -99,10 +99,15 @@ export function MovieRow({ movies, onOpenMovie }: MovieRowProps) {
                   </span>
                 )}
                 {/* Hover/tap overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-t from-black/80 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <span className="inline-flex h-12 w-12 items-center justify-center rounded-full nuvio-gradient-bg text-white shadow-lg">
                     <Play className="h-5 w-5 fill-current" />
                   </span>
+                  {m.trailerYtIds.length > 0 && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
+                      ▶ Trailer
+                    </span>
+                  )}
                 </div>
               </button>
               <div className="mt-2.5 px-0.5">

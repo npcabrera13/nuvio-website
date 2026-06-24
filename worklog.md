@@ -399,3 +399,46 @@ Unresolved issues or risks:
   - Add an admin GET /api/leads endpoint (password-protected) to view collected emails.
   - Add keyboard shortcut help overlay (? key).
   - Add a "watch trailer" button on movie posters in the rows (not just in modal).
+
+---
+Task ID: 9
+Agent: Z.ai Code (webDevReview cron — round 9)
+Task: Recurring QA + enhancement round. Assess project status, perform agent-browser QA, fix bugs if any, then implement next-phase enhancements. Strict no-backend rule still applies.
+
+Work Log:
+- Read worklog.md and reviewed round 8's completed state (21 sections + TOC + More like this + share button).
+- Performed fresh QA: dev.log healthy (GET / 200), lint clean, Stremio API HTTP 200 application/json, agent-browser opened with zero errors.
+- QA RESULT: stable. Noted one cosmetic bug: Radix Dialog "Missing Description or aria-describedby" warning when modal opens. Fixed it this round.
+- Implemented 4 enhancements + 1 bug fix:
+  1. **Bug fix: Radix Dialog aria warning** (`movie-modal.tsx`): added `DialogTitle` (sr-only) with dynamic movie name + `DialogDescription` (sr-only) with context. Verified: opening the modal no longer produces the console warning.
+  2. **Keyboard shortcut help overlay** (`keyboard-help.tsx`): pressing `?` opens a clean modal listing all shortcuts grouped by Search (⌘K, Esc), Navigation (←, →, ?, Esc), and Page (Home). Closes on Esc or backdrop click. Doesn't trigger when typing in inputs. VLM confirmed clean layout, organized sections, good contrast.
+  3. **Trailer quick-action on posters** (`movie-row.tsx`): hover overlay now shows a "▶ Trailer" pill below the play button for movies that have trailers (20 pills rendered in the Now Streaming row). Clicking the poster opens the modal which auto-plays the trailer.
+  4. **Admin leads endpoint** (`api/leads/route.ts`): added password-protected GET handler. `GET /api/leads?key=<NUVIO_ADMIN_KEY>` returns JSON {count, leads}. `?format=csv` downloads as CSV. Defaults to key "nuvio-admin-2026" if env var not set. Verified: no key → 401, wrong key → 401, correct key → 2 leads returned (newsletter@test.com, test@example.com), CSV export works.
+  5. **Styling**: keyboard help uses the established nuvio-card + gradient icon + grouped sections pattern. Trailer pill uses white/15 backdrop-blur styling matching the hero "View details" button.
+- Updated `page.tsx`: added `<KeyboardHelp />` overlay.
+- Re-verified with agent-browser:
+  - Page loads, no errors. Radix Dialog warning GONE (was appearing on modal open in round 8).
+  - Keyboard help: pressed ? → overlay opened with "Keyboard shortcuts" heading, all shortcuts listed (⌘K, ←, →, Esc, Home, ?). VLM confirmed clean, organized, good contrast.
+  - Trailer pills: 20 rendered in the Now Streaming row (one per movie with trailers).
+  - Admin leads: 401 without key, 401 with wrong key, 200 + 2 leads with correct key, CSV export works.
+  - Lint clean, dev server healthy, Stremio API HTTP 200 application/json (100% untouched).
+
+Stage Summary:
+- The Nuvio landing page now has 21 content sections + TOC + keyboard help overlay.
+- New accessibility: Radix Dialog warning fixed (sr-only Title + Description). Keyboard help overlay (? key) documents all shortcuts.
+- New admin tool: password-protected GET /api/leads endpoint with JSON + CSV export for viewing collected emails.
+- New UX: trailer quick-action pills on movie posters signal which titles have trailers.
+- **The Stremio API remains 100% untouched.** Verified post-changes: `manifest.json` → HTTP 200 application/json.
+
+Unresolved issues or risks:
+- None blocking. All features verified working.
+- The admin key defaults to "nuvio-admin-2026" if NUVO_ADMIN_KEY env var is not set — for production, set a strong env var.
+- Recommended next-phase enhancements (for the next webDevReview round):
+  - Migrate `<img>` to `next/image` in poster-heavy components (config already in place).
+  - Add a dark/light theme toggle (currently dark-only).
+  - Add page-transition animations with next/view-transitions.
+  - Add a "New & Trending" timestamp section highlighting recently added content with dates.
+  - Add a simple admin HTML page (password form → leads table) at a hidden route.
+  - Add a "watch trailer" inline mini-player on posters (without opening modal).
+  - Add Open Graph image variant per movie (dynamic OG for shared movie links).
+  - Add a loading skeleton for the movie modal recommendations.

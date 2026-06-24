@@ -5,6 +5,8 @@ import {
   Dialog,
   DialogContent,
   DialogClose,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { X, Star, Play, Clock, Calendar, Users, Film, Sparkles } from "lucide-react";
 import type { NuvioMovie } from "@/lib/nuvio";
@@ -20,6 +22,14 @@ export function MovieModal({ movie, onClose, onOpenMovie }: MovieModalProps) {
   return (
     <Dialog open={movie !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl gap-0 p-0 overflow-hidden border-white/10 bg-[#0d0d14] max-h-[92vh]">
+        <DialogTitle className="sr-only">
+          {movie ? `${movie.name} — Movie details` : "Movie details"}
+        </DialogTitle>
+        <DialogDescription className="sr-only">
+          {movie
+            ? `View details, trailer, cast, and recommendations for ${movie.name}.`
+            : "Movie details and trailer."}
+        </DialogDescription>
         {movie && <ModalBody movie={movie} onOpenMovie={onOpenMovie} />}
         <DialogClose className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors ring-1 ring-white/15">
           <X className="h-4 w-4" />
