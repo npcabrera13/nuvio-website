@@ -6,9 +6,10 @@ import type { NuvioMovie } from "@/lib/nuvio";
 
 interface HeroProps {
   movies: NuvioMovie[];
+  onOpenMovie?: (m: NuvioMovie) => void;
 }
 
-export function Hero({ movies }: HeroProps) {
+export function Hero({ movies, onOpenMovie }: HeroProps) {
   const top5 = movies.slice(0, 5);
   const [active, setActive] = useState(0);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -137,6 +138,16 @@ export function Hero({ movies }: HeroProps) {
                   <p className="mt-1.5 text-sm text-white/70 line-clamp-2 hidden sm:block max-w-md">
                     {current.description}
                   </p>
+                )}
+                {onOpenMovie && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenMovie(current)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm ring-1 ring-white/20 hover:bg-white/25 transition-colors"
+                  >
+                    <Play className="h-3 w-3 fill-current" />
+                    View details
+                  </button>
                 )}
               </div>
             )}

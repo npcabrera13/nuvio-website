@@ -47,3 +47,64 @@ Stage Summary:
 Unresolved issues or risks:
 - None blocking. The landing page is production-ready for the `/` route.
 - Optional future enhancements (for the recurring webDevReview cron): add a working "Login" / trial signup flow, wire CTA buttons to a real PayMongo checkout, add OpenGraph preview image, add structured data (JSON-LD) for SEO, add a cookie consent banner for PH data-privacy compliance.
+
+---
+Task ID: 2
+Agent: Z.ai Code (webDevReview cron — round 2)
+Task: Recurring QA + enhancement round. Assess project status, perform agent-browser QA, fix bugs if any, otherwise propose and implement new features + styling refinements. Strict no-backend rule still applies.
+
+Work Log:
+- Read worklog.md and reviewed the previous round's completed state (full landing page with 10 sections).
+- Performed fresh QA via agent-browser:
+  - Opened http://localhost:3000/ → title correct, `errors` → none, `console` → clean.
+  - Captured full-page screenshots at desktop (1440×8379), tablet (768), and mobile (390×11798).
+  - Cropped into 8 desktop section screenshots + 5 mobile section screenshots.
+  - Ran VLM analysis (z-ai vision) on every section crop — all returned "OK" with no concrete visual bugs (no broken images, no text cutoff, no misalignment, no contrast failures, no overflow).
+  - Tested interactions: smooth-scroll nav links ✓, hero carousel auto-advance + manual dots ✓, FAQ toggle ✓, channel filters ✓, movie row scroll arrows ✓, mobile menu ✓.
+  - Verified dev.log (GET / 200), lint clean, Stremio API still HTTP 200 application/json.
+- QA RESULT: Phase is stable, zero bugs found. Proceeded to add new features + styling refinements per the mandatory requirements.
+- Implemented 9 new features:
+  1. `scroll-utilities.tsx` — top scroll-progress bar (gradient, tracks page scroll %) + floating back-to-top button (appears after 1.2 viewports, smooth-scrolls to top).
+  2. `cookie-consent.tsx` — PH Data Privacy Act cookie banner (glass card, Accept all / Essential only, localStorage persistence, 1.2s delay, safe-area aware).
+  3. `mobile-sticky-cta.tsx` — sticky bottom CTA bar (mobile-only, shows after hero, hides near final CTA, safe-area padding, keeps conversion action always one tap away).
+  4. `movie-modal.tsx` — rich movie detail modal (shadcn Dialog): backdrop hero, genres, synopsis, cast chips, IMDB rating, runtime, "Included with Nuvio" note, CTA. Triggered by clicking any movie poster or the hero "View details" button.
+  5. `how-it-works.tsx` — new 3-step section (Sign up → Add bundle → Press play) with gradient icon tiles, step number badges, desktop connecting line.
+  6. `devices.tsx` — device-compatibility section (Android, iOS, Android TV, Windows/Mac, Chromecast/AirPlay, Fire Stick) with hover-scale icon cards.
+  7. `stats.tsx` — animated stat counters (10,000+ titles, 27 channels, 2,400+ users, 98% savings) with IntersectionObserver-triggered count-up (easeOutExpo), gradient tabular-nums.
+  8. JSON-LD structured data (Product schema with Offer + AggregateRating) added to layout.tsx for SEO.
+  9. OpenGraph/Twitter card images added to metadata.
+- Refactored movie sections into `nuvio-movie-sections.tsx` client orchestrator to lift modal open-state above the server-fetched data.
+- Updated `movie-row.tsx`: posters are now `<button>` elements (a11y) with aria-labels, onClick opens modal.
+- Updated `hero.tsx`: added "View details" button on the active movie meta that opens the modal.
+- Updated `page.tsx`: assembled all sections in logical order (Hero+Row → Stats → Channels → HowItWorks → AppPreview → Devices → PriceCompare → Pricing → Reviews → FAQ → FinalCTA → Footer + sticky/mobile/cookie overlays).
+- Re-verified with agent-browser after changes:
+  - Page loads, no errors, no console warnings.
+  - Movie modal: clicking poster opens modal with full content (verified "Michael" movie: title, Biography/Drama/History genres, full synopsis, cast Jaafar Jackson/Nia Long/Colman Domingo, "Included with Nuvio" note, CTA). VLM confirmed no bugs.
+  - Cookie consent: appears after 1.2s, "Accept all" dismisses + persists in localStorage, doesn't reappear on reload.
+  - Mobile sticky CTA: appears after hero scroll, VLM confirmed "Start Free" + price visible.
+  - Back-to-top: appears on scroll, click smooth-scrolls to top (y: 2000→18).
+  - JSON-LD: present in page source (`{"@context":"https://schema.org","@type":"Product","name":"Nuvio Streaming Bundl...`).
+  - VLM QA on all 3 new-section crops (stats/channels, howitworks/app, devices/price) — all "OK", no bugs.
+  - Stremio API: still HTTP 200 application/json — 100% untouched (this project remains a read-only client with no api/proxy.js, vercel.json, or .m3u files).
+  - Lint clean, dev server GET / 200.
+
+Stage Summary:
+- The Nuvio landing page now has 13 content sections (up from 10) plus 3 always-on overlay utilities (scroll progress, back-to-top, mobile sticky CTA) and a cookie consent banner.
+- New interactive capability: every movie poster and the hero carousel are now clickable, opening a rich detail modal with real Stremio API data (synopsis, cast, genres, rating, runtime).
+- New sections add conversion reinforcement (animated stats, how-it-works, device compatibility) without touching the backend.
+- SEO improved: JSON-LD Product schema + OpenGraph/Twitter images.
+- PH compliance improved: Data Privacy Act cookie consent banner.
+- All features verified working on desktop and mobile via agent-browser + VLM.
+- **The Stremio API remains 100% untouched.** Verified post-changes: `manifest.json` → `{"id":"com.nuvio.bundle.v2",...}` HTTP 200 application/json.
+
+Unresolved issues or risks:
+- None blocking. All new features verified working.
+- Recommended next-phase enhancements (for the next webDevReview round):
+  - Add a genre-filterable movie browser section (let users browse by Action/Comedy/etc. using the Cinemeta genre extra).
+  - Add a "Popular Series" row (fetch from the series cinemeta catalog).
+  - Add a lightweight A/B-tested hero headline variant.
+  - Wire CTA buttons to a real PayMongo checkout or a lead-capture email form.
+  - Add a comparison table (Nuvio vs. competitors feature matrix).
+  - Add lazy-loaded YouTube trailer embeds in the movie modal (trailerStreams data is available from the API).
+  - Add a "New on Nuvio" timestamp/section that highlights recently added content.
+  - Performance: add `next/image` optimization for movie posters (currently using <img> for cross-origin metahub URLs).

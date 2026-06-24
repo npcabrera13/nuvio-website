@@ -31,11 +31,35 @@ export const metadata: Metadata = {
     description: "Netflix + Disney+ + HBO + 27 live channels. ₱49/month. 7 days free.",
     siteName: "Nuvio",
     type: "website",
+    images: ["https://i.ibb.co/J91qPG0/Logo-1080x1080.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Nuvio — All your streaming. One app.",
     description: "₱49/month. 7 days free, no credit card.",
+    images: ["https://i.ibb.co/J91qPG0/Logo-1080x1080.png"],
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: "Nuvio Streaming Bundle",
+  description:
+    "All-in-one Philippine streaming app bundling movies, series, anime, and 27 live channels. From ₱49/month with a 7-day free trial.",
+  brand: { "@type": "Brand", name: "Nuvio" },
+  logo: "https://i.ibb.co/J91qPG0/Logo-1080x1080.png",
+  offers: {
+    "@type": "Offer",
+    priceCurrency: "PHP",
+    price: "49",
+    availability: "https://schema.org/InStock",
+    url: "https://nuviostreamapi.vercel.app",
+  },
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "4.9",
+    reviewCount: "2400",
   },
 };
 
@@ -49,6 +73,10 @@ export default function RootLayout({
       <body
         className={`${inter.variable} antialiased bg-background text-foreground min-h-screen flex flex-col`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         {children}
         <Toaster />
       </body>

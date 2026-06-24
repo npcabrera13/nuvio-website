@@ -6,9 +6,10 @@ import type { NuvioMovie } from "@/lib/nuvio";
 
 interface MovieRowProps {
   movies: NuvioMovie[];
+  onOpenMovie?: (m: NuvioMovie) => void;
 }
 
-export function MovieRow({ movies }: MovieRowProps) {
+export function MovieRow({ movies, onOpenMovie }: MovieRowProps) {
   const scroller = useRef<HTMLDivElement>(null);
   const list = movies.slice(0, 20);
 
@@ -63,7 +64,12 @@ export function MovieRow({ movies }: MovieRowProps) {
               key={m.id}
               className="group relative w-[150px] sm:w-[180px] lg:w-[200px] shrink-0"
             >
-              <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+              <button
+                type="button"
+                onClick={() => onOpenMovie?.(m)}
+                aria-label={`View details for ${m.name}`}
+                className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 cursor-pointer block text-left"
+              >
                 <img
                   src={m.poster}
                   alt={m.name}
@@ -87,7 +93,7 @@ export function MovieRow({ movies }: MovieRowProps) {
                     <Play className="h-5 w-5 fill-current" />
                   </span>
                 </div>
-              </div>
+              </button>
               <div className="mt-2.5 px-0.5">
                 <h3 className="text-sm font-semibold line-clamp-1">{m.name}</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
