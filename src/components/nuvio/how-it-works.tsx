@@ -19,7 +19,7 @@ const STEPS = [
     n: "03",
     icon: Play,
     title: "Press play. That's it.",
-    desc: "Browse movies, series, anime, and live TV. Nuvio auto-picks the best stream in 1080p. Grab the popcorn.",
+    desc: "Browse movies, series, anime, and live TV. Nuvio auto-picks the best stream in Full HD. Grab the popcorn.",
     accent: "from-pink-500 to-rose-600",
   },
 ];

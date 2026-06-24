@@ -34,12 +34,14 @@ function BrandIcon({ brand }: { brand: BrandLogo }) {
     );
   }
   if (brand.png) {
+    // PNG logos (Disney+, HBO Max) may not be square — use object-contain
+    // so they preserve their natural aspect ratio inside the fixed box.
     return (
       <img
         src={brand.png}
         alt={`${brand.name} logo`}
         loading="lazy"
-        className="nuvio-white-logo h-5 w-5"
+        className="nuvio-white-logo h-5 w-5 object-contain"
       />
     );
   }

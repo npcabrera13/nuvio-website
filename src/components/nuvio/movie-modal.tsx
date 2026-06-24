@@ -144,7 +144,7 @@ function ModalBody({
           <Film className="h-4 w-4 text-green-400" />
           <p className="text-xs text-green-200">
             <span className="font-semibold">Included with Nuvio.</span> Stream
-            this in 1080p — no extra cost, no per-movie fee.
+            this in Full HD — no extra cost, no per-movie fee.
           </p>
         </div>
 

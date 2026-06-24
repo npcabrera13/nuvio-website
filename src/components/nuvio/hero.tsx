@@ -176,7 +176,7 @@ export function Hero({ movies, onOpenMovie }: HeroProps) {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pink-400 opacity-75" />
               <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-pink-500" />
             </span>
-            <span className="text-xs sm:text-sm font-medium">Streaming now in 1080p</span>
+            <span className="text-xs sm:text-sm font-medium">Now streaming in Full HD</span>
           </div>
         </div>
       </div>

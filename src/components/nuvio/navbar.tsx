@@ -7,7 +7,7 @@ import { ThemeToggle } from "@/components/nuvio/theme-toggle";
 import type { NuvioMovie } from "@/lib/nuvio";
 
 const NAV_LINKS = [
-  { label: "Features", href: "#features" },
+  { label: "Features", href: "#how-it-works" },
   { label: "Channels", href: "#channels" },
   { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },

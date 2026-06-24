@@ -314,7 +314,7 @@ export const PRICING_TIERS: PricingTier[] = [
     duration: "30 Days",
     price: 49,
     perDay: "₱1.63 per day",
-    features: ["Full movie & series library", "All 27 live channels", "1080p streaming", "1 device"],
+    features: ["Full movie & series library", "All 27 live channels", "Full HD streaming", "1 device"],
   },
   {
     id: "90",
@@ -330,7 +330,7 @@ export const PRICING_TIERS: PricingTier[] = [
     duration: "60 Days",
     price: 89,
     perDay: "₱1.48 per day",
-    features: ["Full movie & series library", "All 27 live channels", "1080p streaming", "1 device"],
+    features: ["Full movie & series library", "All 27 live channels", "Full HD streaming", "1 device"],
   },
 ];
 
@@ -444,7 +444,7 @@ export const REVIEWS: Review[] = [
     name: "Andrea Lim",
     initial: "A",
     location: "Cebu City",
-    text: "Best decision ever. I canceled three subscriptions and now I pay ₱49 for everything. The 1080p quality is surprisingly good!",
+    text: "Best decision ever. I canceled three subscriptions and now I pay ₱49 for everything. The Full HD quality is surprisingly good!",
     gradient: "from-purple-500 to-violet-500",
   },
   {
@@ -498,7 +498,7 @@ export const FAQS: FaqItem[] = [
   },
   {
     q: "What internet speed do I need?",
-    a: "For smooth 1080p streaming, we recommend at least 10 Mbps. For 4K content (on the 90-day plan), 25 Mbps or higher is ideal. Lower speeds still work — the player auto-adjusts quality to match your connection.",
+    a: "For smooth Full HD streaming, we recommend at least 10 Mbps. For 4K content (on the 90-day plan), 25 Mbps or higher is ideal. Lower speeds still work — the player auto-adjusts quality to match your connection.",
   },
   {
     q: "Is this legal?",
