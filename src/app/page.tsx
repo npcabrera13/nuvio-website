@@ -6,6 +6,7 @@ import { AppPreview } from "@/components/nuvio/app-preview";
 import { Devices } from "@/components/nuvio/devices";
 import { PriceComparison } from "@/components/nuvio/price-comparison";
 import { ComparisonTable } from "@/components/nuvio/comparison-table";
+import { SavingsCalculator } from "@/components/nuvio/savings-calculator";
 import { PricingTiers } from "@/components/nuvio/pricing-tiers";
 import { Reviews } from "@/components/nuvio/reviews";
 import { Faq } from "@/components/nuvio/faq";
@@ -52,6 +53,7 @@ export default async function Home() {
         <Reveal><Devices /></Reveal>
         <Reveal><PriceComparison /></Reveal>
         <Reveal><ComparisonTable /></Reveal>
+        <Reveal><SavingsCalculator /></Reveal>
         <Reveal><PricingTiers /></Reveal>
         <Reveal><Reviews /></Reveal>
         <Reveal><Faq /></Reveal>

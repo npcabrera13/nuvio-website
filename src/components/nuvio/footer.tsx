@@ -1,4 +1,7 @@
-import { Facebook, Instagram, Youtube, Mail } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Facebook, Instagram, Youtube, Mail, Send, CheckCircle, Loader2 } from "lucide-react";
 
 const FOOTER_COLUMNS = [
   {
@@ -34,11 +37,40 @@ const FOOTER_COLUMNS = [
 ];
 
 export function Footer() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setStatus("loading");
+    setErrorMsg("");
+    try {
+      const res = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setStatus("error");
+        setErrorMsg(data.error ?? "Something went wrong.");
+        return;
+      }
+      setStatus("success");
+      setEmail("");
+    } catch {
+      setStatus("error");
+      setErrorMsg("Network error. Please try again.");
+    }
+  };
+
   return (
     <footer className="mt-auto border-t border-white/10 bg-[#08080d]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 lg:py-16">
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
-          {/* Brand column */}
+          {/* Brand column + newsletter */}
           <div>
             <a href="#top" className="flex items-center gap-2.5">
               <img
@@ -53,6 +85,56 @@ export function Footer() {
             <p className="mt-4 text-sm text-muted-foreground max-w-xs leading-relaxed">
               All your streaming in one Philippine app. Movies, series, anime, and 27 live channels — from ₱49/month.
             </p>
+
+            {/* Newsletter signup */}
+            <div className="mt-5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                Get streaming tips &amp; new releases
+              </p>
+              {status === "success" ? (
+                <div className="flex items-center gap-2 rounded-xl border border-green-500/30 bg-green-500/10 px-3.5 py-2.5 text-sm text-green-300">
+                  <CheckCircle className="h-4 w-4 shrink-0" />
+                  Subscribed! Watch your inbox.
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="flex gap-2">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    aria-label="Newsletter email"
+                    className="flex-1 min-w-0 rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-violet-500/40"
+                  />
+                  <button
+                    type="submit"
+                    disabled={status === "loading"}
+                    aria-label="Subscribe to newsletter"
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg nuvio-gradient-bg text-white disabled:opacity-60 active:scale-95 transition-transform"
+                  >
+                    {status === "loading" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </button>
+                </form>
+              )}
+              {status === "error" && errorMsg && (
+                <p className="mt-1.5 text-xs text-red-400">{errorMsg}</p>
+              )}
+              <span className="sr-only" aria-live="polite">
+                {status === "loading"
+                  ? "Subscribing"
+                  : status === "success"
+                    ? "Successfully subscribed"
+                    : status === "error"
+                      ? `Error: ${errorMsg}`
+                      : ""}
+              </span>
+            </div>
+
             <div className="mt-5 flex items-center gap-2">
               {[
                 { Icon: Facebook, label: "Facebook" },

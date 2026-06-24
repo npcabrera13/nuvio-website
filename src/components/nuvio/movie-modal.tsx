@@ -112,7 +112,7 @@ function ModalBody({ movie }: { movie: NuvioMovie }) {
             <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
               <Play className="h-3.5 w-3.5" /> Official trailer
             </p>
-            <LiteYouTube id={movie.trailerYtIds[0]} title={`${movie.name} trailer`} />
+            <LiteYouTube id={movie.trailerYtIds[0]} title={`${movie.name} trailer`} autoPlay />
           </div>
         )}
 

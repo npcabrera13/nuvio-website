@@ -311,3 +311,45 @@ Unresolved issues or risks:
   - Add lazy-loaded YouTube trailer autoplay on modal open (currently requires click).
   - Add a comparison "savings calculator" (input current subscriptions → see yearly savings with Nuvio).
   - Add a newsletter signup in the footer (reuse the leads API).
+
+---
+Task ID: 7
+Agent: Z.ai Code (webDevReview cron — round 7)
+Task: Recurring QA + enhancement round. Assess project status, perform agent-browser QA, fix bugs if any, then implement next-phase enhancements. Strict no-backend rule still applies.
+
+Work Log:
+- Read worklog.md and reviewed round 6's completed state (20 sections + OG image + SEO files + recently-viewed + genre hash sync + NEW badges).
+- Performed fresh QA: dev.log healthy (GET / 200), lint clean, Stremio API HTTP 200 application/json, agent-browser opened with zero errors, 15 level-2 headings present.
+- QA RESULT: stable, zero bugs. Picked up the next recommended items: savings calculator, footer newsletter, trailer autoplay, styling polish.
+- Implemented 4 enhancements:
+  1. **Interactive savings calculator** (`savings-calculator.tsx`): users toggle their current subscriptions (Netflix, Disney+, HBO Max, Prime Video, Apple TV+, Crunchyroll, Cignal TV, Sky Cable) and see real-time yearly savings vs Nuvio. Defaults to Netflix+Disney+HBO selected (₱18,696/year savings, 97%). Shows current monthly/yearly total, Nuvio ₱49/month, savings badge with %, and a "Start saving today" CTA. VLM confirmed clear layout, no bugs.
+  2. **Footer newsletter signup** (`footer.tsx` rewritten as client component): email input + send button that POSTs to the existing `/api/leads` endpoint. Loading spinner, success state ("Subscribed! Watch your inbox." with CheckCircle), error handling, ARIA live region. Verified: newsletter@test.com stored in SQLite DB. Reuses the leads API with no backend changes.
+  3. **Trailer autoplay on modal open** (`lite-youtube.tsx` + `movie-modal.tsx`): added `autoPlay` prop to LiteYouTube. When set, shows a "Loading trailer…" spinner for 600ms then auto-loads the YouTube iframe — so the trailer starts playing without requiring an extra click, while keeping the modal instant. Verified: opening "Michael" modal auto-loaded the YouTube iframe.
+  4. **Styling consistency**: savings calculator uses the established premium dark card + violet/pink gradient + green savings accent. Newsletter form matches the Final CTA email input styling. All new components wrapped in `<Reveal>` for scroll animations.
+- Updated `page.tsx`: inserted `<SavingsCalculator>` between ComparisonTable and PricingTiers, wrapped in Reveal.
+- Re-verified with agent-browser:
+  - Page loads, no errors, no console warnings.
+  - Savings calculator: "How much could you save?" heading present, default selection shows ₱18,696/year savings (97%), toggling Prime Video updated the total. VLM confirmed clear layout.
+  - Footer newsletter: filled newsletter@test.com → "Subscribed! Watch your inbox." → email stored in SQLite DB.
+  - Trailer autoplay: opened Michael modal → YouTube iframe auto-loaded after delay (no extra click needed). "OFFICIAL TRAILER" section visible.
+  - Lint clean, dev server healthy, Stremio API HTTP 200 application/json (100% untouched).
+
+Stage Summary:
+- The Nuvio landing page now has 21 content sections (up from 20): added interactive Savings Calculator.
+- New conversion tool: savings calculator makes the value proposition personal — users see exactly how much THEY save based on their current subscriptions.
+- New lead capture surface: footer newsletter signup (reuses /api/leads, no backend changes).
+- Improved UX: movie trailers now auto-play when the modal opens (600ms delay keeps modal instant).
+- **The Stremio API remains 100% untouched.** Verified post-changes: `manifest.json` → HTTP 200 application/json.
+
+Unresolved issues or risks:
+- None blocking. All features verified working.
+- The footer is now a client component (was server) due to the newsletter form's interactivity; this is fine for a landing page.
+- Recommended next-phase enhancements (for the next webDevReview round):
+  - Migrate `<img>` to `next/image` in poster-heavy components (config already in place).
+  - Add a password-protected admin dashboard to view/export collected leads.
+  - Add a dark/light theme toggle (currently dark-only).
+  - Add page-transition animations with next/view-transitions.
+  - Add a "savings calculator" result share button (share to social media).
+  - Add a "New & Trending" timestamp section highlighting recently added content with dates.
+  - Add a sticky table-of-contents nav on desktop (jump to sections).
+  - Add genre-based "More like this" recommendations in the movie modal.
