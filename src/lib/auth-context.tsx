@@ -19,8 +19,11 @@ import {
   Timestamp,
 } from "firebase/firestore";
 
-/** Admin email — bypasses email verification */
-const ADMIN_EMAIL = "neilpaolocabrera@gmail.com";
+/** Admin emails — bypass email verification (go straight to dashboard) */
+const ADMIN_EMAILS = [
+  "neilpaolocabrera@gmail.com",
+  "gensnapdragon5@gmail.com",
+].map((e) => e.toLowerCase());
 
 interface UserProfile {
   uid: string;
@@ -133,7 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signup = useCallback(
     async (email: string, password: string) => {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-      const isAdmin = email.toLowerCase() === ADMIN_EMAIL;
+      const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
 
       if (isAdmin) {
         // Admin: auto-verify, skip email flow, go straight to dashboard
