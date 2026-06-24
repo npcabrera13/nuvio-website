@@ -344,9 +344,9 @@ export interface BrandLogo {
 
 export const COMPETITOR_BRANDS: BrandLogo[] = [
   { name: "Netflix", slug: "netflix" },
-  { name: "Prime Video", slug: "amazonprimevideo" },
-  { name: "Disney+", slug: null, png: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-states/disney-plus.png" },
-  { name: "HBO Max", slug: null, png: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-states/hbo-max.png" },
+  { name: "Prime Video", slug: "amazonprime" },
+  { name: "Disney+", slug: null, png: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-states/disney-plus-us.png" },
+  { name: "HBO Max", slug: null, png: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-states/hbo-max-us.png" },
   { name: "Apple TV+", slug: "appletv" },
   { name: "Crunchyroll", slug: "crunchyroll" },
   { name: "Hulu", slug: "hulu" },

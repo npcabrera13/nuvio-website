@@ -99,7 +99,7 @@ export function PriceComparison() {
                   alt="Nuvio"
                   width={28}
                   height={28}
-                  className="h-7 w-7 rounded-md object-contain"
+                  className="h-7 w-7 rounded-md object-cover"
                 />
                 <span className="text-lg font-bold">Nuvio</span>
               </div>
