@@ -85,6 +85,12 @@ export function MovieRow({ movies, onOpenMovie }: MovieRowProps) {
                 <span className="absolute top-2 left-2 inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-black/70 px-1.5 text-sm font-extrabold text-white backdrop-blur-sm ring-1 ring-white/10">
                   {i + 1}
                 </span>
+                {/* NEW badge for 2026 releases */}
+                {m.year === "2026" && (
+                  <span className="absolute bottom-2 left-2 inline-flex items-center rounded-md bg-gradient-to-r from-pink-500 to-fuchsia-500 px-1.5 py-0.5 text-[9px] font-bold text-white shadow-sm">
+                    NEW
+                  </span>
+                )}
                 {/* Rating */}
                 {m.imdbRating && (
                   <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-lg bg-black/70 px-2 py-1 text-xs font-semibold text-yellow-300 backdrop-blur-sm ring-1 ring-white/10">

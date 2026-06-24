@@ -263,3 +263,51 @@ Unresolved issues or risks:
   - Add a dark/light theme toggle (currently dark-only).
   - Add page-transition animations with next/view-transitions.
   - Add a sitemap.xml + robots.txt for SEO.
+
+---
+Task ID: 6
+Agent: Z.ai Code (webDevReview cron — round 6)
+Task: Recurring QA + enhancement round. Assess project status, perform agent-browser QA, fix bugs if any, then implement next-phase enhancements. Strict no-backend rule still applies.
+
+Work Log:
+- Read worklog.md and reviewed round 5's completed state (19 sections + a11y + PWA + keyboard nav).
+- Performed fresh QA: dev.log healthy (GET / 200), lint clean, Stremio API HTTP 200 application/json, agent-browser opened with zero errors, 15 level-2 headings present.
+- QA RESULT: stable, zero bugs. Picked up the next recommended items: OG image, sitemap/robots, recently-viewed, genre hash sync, NEW badges.
+- Implemented 6 enhancements:
+  1. **OG image generation** (`src/app/opengraph-image.tsx`): dynamic 1200×630 PNG via next/og (edge runtime). Premium dark gradient with Nuvio "N" logo, "All your streaming. One app. ₱49/month." gradient headline, subtitle, and 3 feature bullets (27 channels, 10,000+ titles, no credit card). Auto-linked as `og:image` meta. Verified: HTTP 200 image/png, 277KB. VLM confirmed sleek design, no text cutoff.
+  2. **sitemap.xml** (`src/app/sitemap.ts`): generated at `/sitemap.xml` with the site URL, daily changefreq, priority 1. Verified valid XML.
+  3. **robots.txt** (updated `public/robots.txt`): kept the static file (avoids conflict with app/robots.ts), added `Disallow: /api/` and `Sitemap:` reference. Verified serves correctly.
+  4. **Recently Viewed section** (`recently-viewed.tsx`): localStorage-backed row of titles the user has opened (via modal). Listens for global `nuvio:view-movie` CustomEvent (dispatched by the orchestrator's openMovie wrapper). Shows "VIEWED" violet badges, has a "Clear" button, max 12 items, client-only render (no hydration mismatch). Hidden when empty. Verified: opened "Voicemails for Isabelle" → stored in localStorage (count=1) → section appeared with VIEWED badge.
+  5. **Genre browser URL hash sync** (`genre-browser.tsx`): bidirectional sync between genre state and URL hash (`#browse&genre=Comedy`). On mount, reads hash to initialize genre (fixed hydration issue by moving hash read to an effect instead of useState initializer). On genre change, updates hash via replaceState. Verified: navigating to `#browse&genre=Comedy` highlights Comedy + loads Comedy movies; clicking Horror updates hash to `#browse&genre=Horror` + loads Leviticus. Shareable genre links work.
+  6. **NEW badges** (`movie-row.tsx`): 2026 releases now show a pink→fuchsia "NEW" badge in the bottom-left of their poster. Verified: 18 NEW badges rendered in the Now Streaming row.
+- Updated `nuvio-movie-sections.tsx` orchestrator: wrapped openMovie in useCallback that dispatches the `nuvio:view-movie` CustomEvent; added `<RecentlyViewed>` between Hero and MovieRow.
+- Re-verified with agent-browser:
+  - Page loads, no errors, no console warnings.
+  - OG image: `og:image` meta present (`/opengraph-image`), HTTP 200 image/png 277KB, VLM confirmed sleek design.
+  - sitemap.xml: valid XML served at `/sitemap.xml`.
+  - robots.txt: serves correctly with sitemap reference + /api/ disallow.
+  - Recently Viewed: opened a movie → stored in localStorage → section appeared with VIEWED badge. VLM confirmed no bugs.
+  - Genre hash sync: `#browse&genre=Comedy` → Comedy highlighted + Voicemails for Isabelle loaded; clicking Horror → hash updated + Leviticus loaded.
+  - NEW badges: 18 rendered for 2026 movies.
+  - Lint clean, dev server healthy, Stremio API HTTP 200 application/json (100% untouched).
+
+Stage Summary:
+- The Nuvio landing page now has 20 content sections (up from 19): added Recently Viewed (localStorage-backed, appears after first movie open).
+- SEO significantly improved: dynamic OG image (next/og), sitemap.xml, robots.txt with sitemap reference.
+- New personalization: Recently Viewed tracks opened titles in localStorage with a Clear button.
+- New shareability: genre browser URL hash sync — `#browse&genre=Comedy` links now work and are shareable.
+- Visual polish: NEW badges on 2026 releases in the Now Streaming row.
+- **The Stremio API remains 100% untouched.** Verified post-changes: `manifest.json` → HTTP 200 application/json.
+
+Unresolved issues or risks:
+- None blocking. All features verified working.
+- The OG image uses edge runtime — confirm your deployment target supports it (Vercel does).
+- Recommended next-phase enhancements (for the next webDevReview round):
+  - Migrate `<img>` to `next/image` in poster-heavy components (config already in place).
+  - Add a password-protected admin dashboard to view/export collected leads.
+  - Add a dark/light theme toggle (currently dark-only).
+  - Add page-transition animations with next/view-transitions.
+  - Add a "New & Trending" timestamp/section that highlights recently added content with dates.
+  - Add lazy-loaded YouTube trailer autoplay on modal open (currently requires click).
+  - Add a comparison "savings calculator" (input current subscriptions → see yearly savings with Nuvio).
+  - Add a newsletter signup in the footer (reuse the leads API).
