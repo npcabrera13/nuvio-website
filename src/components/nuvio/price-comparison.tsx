@@ -97,9 +97,9 @@ export function PriceComparison() {
                 <img
                   src="https://i.ibb.co/J91qPG0/Logo-1080x1080.png"
                   alt="Nuvio"
-                  width={28}
+                  width={25}
                   height={28}
-                  className="h-7 w-7 rounded-md object-cover"
+                  className="h-7 w-auto rounded"
                 />
                 <span className="text-lg font-bold">Nuvio</span>
               </div>

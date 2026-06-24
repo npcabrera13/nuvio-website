@@ -48,9 +48,9 @@ export function Navbar({ onOpenMovie }: NavbarProps) {
           <img
             src="https://i.ibb.co/J91qPG0/Logo-1080x1080.png"
             alt="Nuvio"
-            width={36}
-            height={36}
-            className="h-9 w-9 rounded-lg object-cover"
+            width={32}
+            height={35}
+            className="h-8 w-auto rounded-md"
           />
           <span className="text-xl font-bold tracking-tight">Nuvio</span>
         </a>
