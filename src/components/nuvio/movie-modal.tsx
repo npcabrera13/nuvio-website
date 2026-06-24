@@ -21,7 +21,7 @@ interface MovieModalProps {
 export function MovieModal({ movie, onClose, onOpenMovie }: MovieModalProps) {
   return (
     <Dialog open={movie !== null} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl gap-0 p-0 overflow-hidden border-border bg-card max-h-[92vh]">
+      <DialogContent showCloseButton={false} className="max-w-2xl gap-0 p-0 overflow-hidden border-border bg-card max-h-[92vh]">
         <DialogTitle className="sr-only">
           {movie ? `${movie.name} — Movie details` : "Movie details"}
         </DialogTitle>

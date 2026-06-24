@@ -50,7 +50,7 @@ export function Navbar({ onOpenMovie }: NavbarProps) {
             alt="Nuvio"
             width={32}
             height={35}
-            className="h-8 w-auto rounded-md"
+            className="h-8 w-auto"
           />
           <span className="text-xl font-bold tracking-tight">Nuvio</span>
         </a>
