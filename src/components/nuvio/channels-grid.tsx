@@ -10,10 +10,50 @@ const FILTERS: ("All" | ChannelCategory)[] = [
   "News",
   "Kids",
   "Movies",
-  "Entertainment",
+  "Anime",
   "Sports",
-  "Discovery",
 ];
+
+/** Fallback colored tile shown if a channel logo fails to load. */
+const FALLBACK_COLORS = [
+  "#7c3aed", "#ec4899", "#3b82f6", "#10b981",
+  "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4",
+];
+
+function ChannelTile({ channel, index }: { channel: (typeof CHANNELS)[number]; index: number }) {
+  const [errored, setErrored] = useState(false);
+  const fallbackColor = FALLBACK_COLORS[index % FALLBACK_COLORS.length];
+
+  return (
+    <div
+      className="group relative aspect-[4/3] sm:aspect-square overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-all hover:border-white/20 hover:-translate-y-1 flex items-center justify-center p-3"
+    >
+      {errored ? (
+        // Styled text fallback when logo fails to load
+        <div
+          className="flex h-full w-full flex-col items-center justify-center rounded-xl text-center"
+          style={{ backgroundColor: fallbackColor }}
+        >
+          <span className="text-sm font-extrabold text-white line-clamp-2 px-1">
+            {channel.name}
+          </span>
+        </div>
+      ) : (
+        <img
+          src={channel.logo}
+          alt={channel.name}
+          loading="lazy"
+          onError={() => setErrored(true)}
+          className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105"
+        />
+      )}
+      {/* hover check */}
+      <div className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-green-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+        <Check className="h-3.5 w-3.5" />
+      </div>
+    </div>
+  );
+}
 
 export function ChannelsGrid() {
   const [filter, setFilter] = useState<"All" | ChannelCategory>("All");
@@ -32,7 +72,7 @@ export function ChannelsGrid() {
             All {CHANNELS.length} Channels. One Price.
           </h2>
           <p className="mt-3 text-muted-foreground">
-            From Philippine free-to-air favorites to global news, kids, movies and sports — every channel is included from day one.
+            From Philippine free-to-air favorites to global news, kids, anime, and sports — every channel is included from day one.
           </p>
         </div>
 
@@ -59,30 +99,8 @@ export function ChannelsGrid() {
 
         {/* Grid */}
         <div className="mt-8 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4">
-          {visible.map((c) => (
-            <div
-              key={c.name}
-              className="group relative aspect-[4/3] sm:aspect-square overflow-hidden rounded-2xl border border-white/10 transition-all hover:border-white/20 hover:-translate-y-1"
-              style={{ backgroundColor: c.color }}
-            >
-              {/* Sheen overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/30" />
-
-              {/* Content */}
-              <div className="relative h-full flex flex-col items-center justify-center p-3 text-center">
-                <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/20 text-base sm:text-lg font-extrabold tracking-tight text-white backdrop-blur-sm">
-                  {c.short}
-                </div>
-                <p className="mt-2 text-[11px] sm:text-xs font-semibold leading-tight line-clamp-2 text-white/90">
-                  {c.name}
-                </p>
-              </div>
-
-              {/* hover check */}
-              <div className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-green-500/90 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                <Check className="h-3.5 w-3.5" />
-              </div>
-            </div>
+          {visible.map((c, i) => (
+            <ChannelTile key={c.name} channel={c} index={i} />
           ))}
         </div>
 

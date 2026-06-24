@@ -248,59 +248,54 @@ export type ChannelCategory =
   | "Movies"
   | "Entertainment"
   | "Sports"
-  | "Discovery";
+  | "Anime";
 
 export interface NuvioChannel {
   name: string;
-  short: string;
+  /** Real logo URL from the Nuvio bundle's .m3u tvg-logo attribute. */
+  logo: string;
   category: ChannelCategory;
-  /** Brand color for the styled tile background (gradient or solid). */
-  color: string;
-  /** Whether a real logo URL is available; otherwise we render a styled text tile. */
-  hasLogo: boolean;
-  logoUrl?: string;
 }
 
 /**
- * Live channels included with Nuvio.
- * Only well-known, verifiable channels are listed. Each tile uses the brand's
- * signature color for instant recognition.
+ * The full lineup of 27 live channels from the Nuvio bundle.
+ * Names + logo URLs are pulled directly from the bundle's .m3u files
+ * (master-ph-v2.m3u + vip-cherry-pick.m3u) — no hallucination.
  */
 export const CHANNELS: NuvioChannel[] = [
-  // Philippine free-to-air
-  { name: "GMA Network", short: "GMA", category: "Philippine", color: "#e2241a", hasLogo: false },
-  { name: "GTV", short: "GTV", category: "Philippine", color: "#1a1a2e", hasLogo: false },
-  { name: "A2Z", short: "A2Z", category: "Philippine", color: "#0066b3", hasLogo: false },
-  { name: "TV5", short: "TV5", category: "Philippine", color: "#d32f2f", hasLogo: false },
-  { name: "IBC 13", short: "IBC", category: "Philippine", color: "#1565c0", hasLogo: false },
-  { name: "PTV 4", short: "PTV", category: "Philippine", color: "#0d47a1", hasLogo: false },
-  { name: "Net 25", short: "NET25", category: "Philippine", color: "#2e7d32", hasLogo: false },
-  { name: "RPN 9", short: "RPN", category: "Philippine", color: "#37474f", hasLogo: false },
-  // News
-  { name: "Al Jazeera", short: "AJ+", category: "News", color: "#fa9200", hasLogo: false },
-  { name: "BBC World News", short: "BBC", category: "News", color: "#bb1919", hasLogo: false },
-  { name: "CNN", short: "CNN", category: "News", color: "#cc0000", hasLogo: false },
-  { name: "ABS-CBN News", short: "ANC", category: "News", color: "#003399", hasLogo: false },
+  // Philippine (PH Local + PH News + PH Entertainment + PH Movies + PH Religious + PH Regional)
+  { name: "GMA Network HD", logo: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/philippines/gma-ph.png", category: "Philippine" },
+  { name: "A2Z HD", logo: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/philippines/a2z-ph.png", category: "Philippine" },
+  { name: "ALLTV HD", logo: "https://i.imgur.com/bmd4D8Z.jpeg", category: "Philippine" },
+  { name: "PTV 4 HD", logo: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/philippines/ptv-ph.png", category: "Philippine" },
+  { name: "INC TV HD", logo: "https://i.imgur.com/Rhrf4nj.jpeg", category: "Philippine" },
+  { name: "Jeepney TV", logo: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/philippines/jeepney-tv-ph.png", category: "Philippine" },
+  { name: "Tagalized Movie Channel", logo: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/philippines/tmc-ph.png", category: "Philippine" },
+  { name: "TV Maria", logo: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/philippines/tv-maria-ph.png", category: "Philippine" },
+  { name: "CLTV 36", logo: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/philippines/cltv-ph.png", category: "Philippine" },
+  { name: "Bilyonario News Channel", logo: "https://i.imgur.com/k4X7If1.jpeg", category: "Philippine" },
+  { name: "Abante", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Abante_masthead.svg/500px-Abante_masthead.svg.png", category: "Philippine" },
+  { name: "Vegas Life TV", logo: "https://i.imgur.com/G7lONcu.png", category: "Philippine" },
+  { name: "Mindanow Network TV", logo: "https://ml02dtnc01wc.i.optimole.com/w:512/h:512/q:mauto/https://mindanownetwork.com/wp-content/uploads/2024/11/Mindanow-Network-Logo-Vertical.png", category: "Philippine" },
+  // News (Global + US)
+  { name: "CGTN News Live", logo: "https://m.media-amazon.com/images/I/31wgHL2U4fL.png", category: "News" },
+  { name: "Al Jazeera English", logo: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-kingdom/aljazeera-uk.png", category: "News" },
+  { name: "CBS News 24/7", logo: "https://images.crunchbase.com/image/upload/c_pad,f_auto,q_auto:eco,dpr_1/vuphdwqrruacvgmt6fwj?ik-sanitizeSvg=true", category: "News" },
+  { name: "ABC News Live", logo: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-states/abc-news-us.png", category: "News" },
   // Kids
-  { name: "Cartoon Network", short: "CN", category: "Kids", color: "#000000", hasLogo: false },
-  { name: "Disney Channel", short: "DIS", category: "Kids", color: "#0b3a8c", hasLogo: false },
-  { name: "Nickelodeon", short: "NICK", category: "Kids", color: "#ff7900", hasLogo: false },
-  { name: "Animax", short: "AX", category: "Kids", color: "#1a237e", hasLogo: false },
-  // Movies
-  { name: "HBO", short: "HBO", category: "Movies", color: "#000000", hasLogo: false },
-  { name: "Cinemax", short: "MAX", category: "Movies", color: "#4a148c", hasLogo: false },
-  { name: "Warner TV", short: "WT", category: "Movies", color: "#f5783f", hasLogo: false },
-  { name: "AXN", short: "AXN", category: "Movies", color: "#1a1a1a", hasLogo: false },
-  // Entertainment
-  { name: "FX", short: "FX", category: "Entertainment", color: "#0a0a0a", hasLogo: false },
-  { name: "Comedy Central", short: "CC", category: "Entertainment", color: "#1a1a1a", hasLogo: false },
+  { name: "Baby Shark TV", logo: "https://yt3.googleusercontent.com/yumIBPCfrCDj0yCBn3mJdVxjmhvC7q3h0H84dhj4o1nfDlLINQRSTgm2GdLAZOevAciyjKHKmg=s900-c-k-c0x00ffffff-no-rj", category: "Kids" },
+  { name: "Tom and Jerry", logo: "https://m.media-amazon.com/images/M/MV5BODY2YWI1OTAtY2FhZS00MGI1LTk0YjUtYmE3MDk0OGFkMWUyXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg", category: "Kids" },
+  { name: "Toon Goggles", logo: "https://static.wikia.nocookie.net/wikifanon/images/6/6c/Playhouse_Toon_Disney_%282002%29_logo.jpg/revision/latest/scale-to-width-down/998?cb=20230102152932", category: "Kids" },
+  { name: "LEGO Channel", logo: "https://static.vecteezy.com/system/resources/previews/020/190/593/non_2x/lego-logo-lego-icon-free-free-vector.jpg", category: "Kids" },
+  // Movies (Premium)
+  { name: "Disney Channel", logo: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-states/disney-channel-us.png", category: "Movies" },
+  { name: "Disney XD", logo: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/united-states/disney-xd-us.png", category: "Movies" },
+  // Anime
+  { name: "Pokemon", logo: "https://images.template.net/494381/Pokemon-Logo-Clipart-edit-online.png", category: "Anime" },
+  { name: "Crunchyroll", logo: "https://static0.srcdn.com/wordpress/wp-content/uploads/2023/04/crunchyroll-poster-logo.jpg", category: "Anime" },
+  { name: "Aniplus Asia", logo: "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/philippines/aniplus-ph.png", category: "Anime" },
   // Sports
-  { name: "ESPN", short: "ESPN", category: "Sports", color: "#d50032", hasLogo: false },
-  { name: "Premier Sports", short: "PS", category: "Sports", color: "#0b5394", hasLogo: false },
-  // Discovery
-  { name: "Discovery", short: "DISC", category: "Discovery", color: "#0b3d91", hasLogo: false },
-  { name: "Nat Geo", short: "NGC", category: "Discovery", color: "#ffcc00", hasLogo: false },
-  { name: "Animal Planet", short: "AP", category: "Discovery", color: "#0066b3", hasLogo: false },
+  { name: "Premier Sports", logo: "https://www.raithrovers.net/wp-content/uploads/2025/05/INFO-1-scaled.png", category: "Sports" },
 ];
 
 export interface PricingTier {

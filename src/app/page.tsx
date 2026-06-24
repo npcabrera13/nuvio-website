@@ -2,7 +2,6 @@ import { NuvioMovieSections } from "@/components/nuvio/nuvio-movie-sections";
 import { Stats } from "@/components/nuvio/stats";
 import { ChannelsGrid } from "@/components/nuvio/channels-grid";
 import { HowItWorks } from "@/components/nuvio/how-it-works";
-import { AppPreview } from "@/components/nuvio/app-preview";
 import { Devices } from "@/components/nuvio/devices";
 import { PriceComparison } from "@/components/nuvio/price-comparison";
 import { ComparisonTable } from "@/components/nuvio/comparison-table";
@@ -53,7 +52,6 @@ export default async function Home() {
         <Reveal><Stats /></Reveal>
         <Reveal><ChannelsGrid /></Reveal>
         <Reveal><HowItWorks /></Reveal>
-        <Reveal><AppPreview movies={movies} /></Reveal>
         <Reveal><Devices /></Reveal>
         <Reveal><PriceComparison /></Reveal>
         <Reveal><ComparisonTable /></Reveal>
