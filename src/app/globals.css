@@ -1,0 +1,230 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/*
+ * Nuvio premium dark theme.
+ * The entire landing page lives on a dark canvas, so we set the dark palette
+ * directly on :root. Background #0a0a0f, cards #13131a, purple→pink accents.
+ */
+:root {
+  --radius: 0.875rem;
+
+  --background: #0a0a0f;
+  --foreground: #f5f5f7;
+  --card: #13131a;
+  --card-foreground: #f5f5f7;
+  --popover: #13131a;
+  --popover-foreground: #f5f5f7;
+
+  /* Nuvio brand: purple #7c3aed → pink #ec4899 */
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --secondary: #1c1c26;
+  --secondary-foreground: #f5f5f7;
+  --muted: #1c1c26;
+  --muted-foreground: #9b9bab;
+  --accent: #ec4899;
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #7c3aed;
+
+  --chart-1: #7c3aed;
+  --chart-2: #ec4899;
+  --chart-3: #8b5cf6;
+  --chart-4: #f472b6;
+  --chart-5: #a78bfa;
+
+  --sidebar: #0f0f15;
+  --sidebar-foreground: #f5f5f7;
+  --sidebar-primary: #7c3aed;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1c1c26;
+  --sidebar-accent-foreground: #f5f5f7;
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: #7c3aed;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "cv01", "cv03";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: rgba(124, 58, 237, 0.35);
+    color: #fff;
+  }
+}
+
+/* ---------- Nuvio custom utilities ---------- */
+
+/* Brand gradient text */
+.nuvio-gradient-text {
+  background: linear-gradient(100deg, #a78bfa 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Brand gradient background */
+.nuvio-gradient-bg {
+  background: linear-gradient(100deg, #7c3aed 0%, #ec4899 100%);
+}
+
+/* Glass morphism */
+.nuvio-glass {
+  background: rgba(13, 13, 20, 0.72);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Glow ring on focus for interactive elements */
+.nuvio-glow {
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.4), 0 8px 40px -8px rgba(124, 58, 237, 0.55);
+}
+
+/* Hide scrollbar but keep scroll */
+.nuvio-no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.nuvio-no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Premium card surface */
+.nuvio-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+/* Ambient grid background for hero */
+.nuvio-grid-bg {
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+}
+
+/* Floating animation for the down arrow / badges */
+@keyframes nuvio-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.nuvio-float {
+  animation: nuvio-float 3s ease-in-out infinite;
+}
+
+/* Slow spin for ambient orbs */
+@keyframes nuvio-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.nuvio-spin-slow {
+  animation: nuvio-spin-slow 28s linear infinite;
+}
+
+/* Marquee for competitor logos */
+@keyframes nuvio-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.nuvio-marquee {
+  animation: nuvio-marquee 32s linear infinite;
+}
+.nuvio-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Shimmer for skeleton */
+@keyframes nuvio-shimmer {
+  100% { transform: translateX(100%); }
+}
+.nuvio-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+  animation: nuvio-shimmer 1.6s infinite;
+}
+
+/* Soft entrance */
+@keyframes nuvio-rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.nuvio-rise {
+  animation: nuvio-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* White-washed brand logo (for competitor svgs) */
+.nuvio-white-logo {
+  filter: brightness(0) invert(1);
+  opacity: 0.7;
+}
+.nuvio-white-logo:hover {
+  opacity: 1;
+}
+
+/* Edge fade mask for marquees */
+.mask-fade-x {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
