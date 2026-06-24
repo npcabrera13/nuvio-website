@@ -13,7 +13,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Nuvio — All your streaming. One app. ₱49/month.",
   description:
-    "Nuvio bundles Netflix, Disney+, HBO Max, Prime Video and 27 live channels into one Philippine streaming app. 7 days free, no credit card. From ₱49/month.",
+    "Nuvio bundles Netflix, Disney+, HBO Max, Prime Video and live channels into one Philippine streaming app. 7 days free, no credit card. From ₱49/month.",
   keywords: [
     "Nuvio",
     "Philippine streaming",
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Nuvio — All your streaming. One app.",
-    description: "Netflix + Disney+ + HBO + 27 live channels. ₱49/month. 7 days free.",
+    description: "Netflix + Disney+ + HBO + live channels. ₱49/month. 7 days free.",
     siteName: "Nuvio",
     type: "website",
     images: ["https://i.ibb.co/J91qPG0/Logo-1080x1080.png"],
@@ -53,7 +53,7 @@ const jsonLd = {
   "@type": "Product",
   name: "Nuvio Streaming Bundle",
   description:
-    "All-in-one Philippine streaming app bundling movies, series, anime, and 27 live channels. From ₱49/month with a 7-day free trial.",
+    "All-in-one Philippine streaming app bundling movies, series, anime, and live channels. From ₱49/month with a 7-day free trial.",
   brand: { "@type": "Brand", name: "Nuvio" },
   logo: "https://i.ibb.co/J91qPG0/Logo-1080x1080.png",
   offers: {

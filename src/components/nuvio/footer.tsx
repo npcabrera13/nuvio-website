@@ -83,7 +83,7 @@ export function Footer() {
               <span className="text-xl font-bold tracking-tight">Nuvio</span>
             </a>
             <p className="mt-4 text-sm text-muted-foreground max-w-xs leading-relaxed">
-              All your streaming in one Philippine app. Movies, series, anime, and 27 live channels — from ₱49/month.
+              All your streaming in one Philippine app. Movies, series, anime, and live channels — from ₱49/month.
             </p>
 
             {/* Newsletter signup */}

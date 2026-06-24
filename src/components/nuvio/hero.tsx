@@ -48,7 +48,7 @@ export function Hero({ movies, onOpenMovie }: HeroProps) {
           </h1>
 
           <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-xl">
-            Netflix, Disney+, HBO Max, Prime Video and 27 live channels — bundled into one Philippine streaming app. No multiple subscriptions. No multiple logins.
+            Netflix, Disney+, HBO Max, Prime Video and dozens of live channels — bundled into one Philippine streaming app. No multiple subscriptions. No multiple logins.
           </p>
 
           {/* Price badge */}
@@ -84,7 +84,7 @@ export function Hero({ movies, onOpenMovie }: HeroProps) {
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" /> 4.9/5 from 2,400+ users
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-green-400" /> 27 live channels
+              <span className="h-1.5 w-1.5 rounded-full bg-green-400" /> Dozens of live channels
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-violet-400" /> 10,000+ titles

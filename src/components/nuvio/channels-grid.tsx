@@ -69,7 +69,7 @@ export function ChannelsGrid() {
             Live TV included
           </p>
           <h2 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
-            All {CHANNELS.length} Channels. One Price.
+            All Channels. One Price.
           </h2>
           <p className="mt-3 text-muted-foreground">
             From Philippine free-to-air favorites to global news, kids, anime, and sports — every channel is included from day one.
@@ -90,9 +90,6 @@ export function ChannelsGrid() {
               }`}
             >
               {f}
-              {f === "All" && (
-                <span className="ml-1.5 text-xs opacity-70">({CHANNELS.length})</span>
-              )}
             </button>
           ))}
         </div>

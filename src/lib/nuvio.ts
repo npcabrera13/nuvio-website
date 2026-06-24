@@ -258,7 +258,7 @@ export interface NuvioChannel {
 }
 
 /**
- * The full lineup of 27 live channels from the Nuvio bundle.
+ * The curated lineup of live channels from the Nuvio bundle.
  * Names + logo URLs are pulled directly from the bundle's .m3u files
  * (master-ph-v2.m3u + vip-cherry-pick.m3u) — no hallucination.
  */
@@ -314,7 +314,7 @@ export const PRICING_TIERS: PricingTier[] = [
     duration: "30 Days",
     price: 49,
     perDay: "₱1.63 per day",
-    features: ["Full movie & series library", "All 27 live channels", "Full HD streaming", "1 device"],
+    features: ["Full movie & series library", "All live channels", "Full HD streaming", "1 device"],
   },
   {
     id: "90",
@@ -330,7 +330,7 @@ export const PRICING_TIERS: PricingTier[] = [
     duration: "60 Days",
     price: 89,
     perDay: "₱1.48 per day",
-    features: ["Full movie & series library", "All 27 live channels", "Full HD streaming", "1 device"],
+    features: ["Full movie & series library", "All live channels", "Full HD streaming", "1 device"],
   },
 ];
 
@@ -389,7 +389,7 @@ export const COMPARISON_FEATURES: ComparisonFeature[] = [
   },
   {
     label: "Live TV channels",
-    values: ["27", false, false, false, false],
+    values: [true, false, false, false, false],
   },
   {
     label: "Pinoy content",
@@ -478,7 +478,7 @@ export interface FaqItem {
 export const FAQS: FaqItem[] = [
   {
     q: "How does Nuvio work?",
-    a: "Nuvio bundles premium streaming addons into one unified app. Add the Nuvio bundle once, and instantly get thousands of movies, series, anime, and 27 live channels — all searchable and playable in a single interface. No switching apps, no multiple logins.",
+    a: "Nuvio bundles premium streaming addons into one unified app. Add the Nuvio bundle once, and instantly get thousands of movies, series, anime, and live channels — all searchable and playable in a single interface. No switching apps, no multiple logins.",
   },
   {
     q: "Which devices are supported?",

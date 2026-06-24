@@ -12,7 +12,7 @@ interface Stat {
 
 const STATS: Stat[] = [
   { value: 10000, suffix: "+", label: "Movies & series" },
-  { value: 27, suffix: "", label: "Live TV channels" },
+  { value: 2, suffix: "min", label: "Setup time" },
   { value: 2400, suffix: "+", label: "Happy streamers" },
   { value: 98, suffix: "%", label: "Cheaper than the rest" },
 ];
