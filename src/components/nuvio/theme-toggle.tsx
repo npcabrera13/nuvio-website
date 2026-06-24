@@ -13,8 +13,9 @@ export function ThemeToggle() {
   // differ between server and client on first render.
   useEffect(() => setMounted(true), []);
 
+  // Server + initial client render: static placeholder with NO theme-dependent
+  // attributes. This guarantees the server and client HTML match exactly.
   if (!mounted) {
-    // Server + initial client render: static placeholder, no theme-dependent attrs
     return (
       <button
         type="button"
@@ -26,6 +27,7 @@ export function ThemeToggle() {
     );
   }
 
+  // After mount: read the resolved theme and render the correct icon/label.
   const isDark = theme === "dark";
 
   return (
