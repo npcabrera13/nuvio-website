@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
@@ -93,16 +93,14 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user, profile, loading, signOut } = useAuth();
   const countdown = useCountdown(profile?.expiresAt ?? null);
+  const redirected = useRef(false);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push("/login");
-      } else if (profile && !profile.emailVerified) {
-        // Not verified — stay but show verify prompt
-      }
+    if (!loading && !user && !redirected.current) {
+      redirected.current = true;
+      router.replace("/login");
     }
-  }, [loading, user, profile, router]);
+  }, [loading, user, router]);
 
   if (loading || !user) {
     return (
