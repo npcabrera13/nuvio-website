@@ -4,12 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { Mail, Lock, User, Eye, EyeOff, Loader2, Chrome, AlertCircle, CheckCircle } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2, Chrome, AlertCircle, CheckCircle } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
   const { signup, loginWithGoogle } = useAuth();
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,7 +28,7 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      const result = await signup(email, password, username);
+      const result = await signup(email, password);
       if (result.needsVerification) {
         setSuccess(true);
       } else {
@@ -145,24 +144,6 @@ export default function SignupPage() {
           {/* Email/Password form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium mb-1.5">
-                Username
-              </label>
-              <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  id="username"
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="juan_dela_cruz"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-violet-500/40"
-                />
-              </div>
-            </div>
-
-            <div>
               <label htmlFor="email" className="block text-sm font-medium mb-1.5">
                 Email
               </label>
@@ -230,7 +211,7 @@ export default function SignupPage() {
         </div>
 
         <p className="mt-4 text-center text-xs text-muted-foreground/70">
-          By signing up, you agree to Nuvio's Terms of Service and Privacy Policy.
+          By signing up, you agree to Nuvio&apos;s Terms of Service and Privacy Policy.
         </p>
       </div>
     </main>

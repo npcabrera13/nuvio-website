@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import {
-  Loader2, Copy, Check, LogOut, Clock, User, Mail, Key, Sparkles,
+  Loader2, Copy, Check, LogOut, Clock, Mail, Key, Sparkles,
   Calendar, Zap, Shield, Tv, Film, AlertCircle, ChevronRight, Crown
 } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
@@ -164,7 +164,7 @@ export default function DashboardPage() {
           <div>
             <p className="text-sm text-muted-foreground">Welcome back,</p>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              {profile.username || user.displayName || "Nuvio User"} 👋
+              {profile.email || user.email || "Nuvio User"} 👋
             </h1>
           </div>
           <button
@@ -208,15 +208,14 @@ export default function DashboardPage() {
         <div className="nuvio-card rounded-3xl p-6 sm:p-8 mb-6">
           <div className="flex items-center gap-2 mb-5">
             <Key className="h-5 w-5 text-pink-400" />
-            <h2 className="text-lg font-bold">Your account credentials</h2>
+            <h2 className="text-lg font-bold">Your login credentials</h2>
           </div>
-          <div className="grid sm:grid-cols-2 gap-3">
-            <CopyField label="Username" value={profile.username || user.displayName || "—"} icon={User} />
+          <div className="space-y-3">
             <CopyField label="Email" value={profile.email || user.email || "—"} icon={Mail} />
           </div>
           <p className="mt-4 text-xs text-muted-foreground flex items-start gap-1.5">
             <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0 text-green-400" />
-            Keep these credentials safe. You&apos;ll need them to log in and access your subscription.
+            Use your email and the password you chose at signup to log in. Keep them safe — you&apos;ll need them to access your subscription.
           </p>
         </div>
 
