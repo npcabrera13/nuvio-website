@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
@@ -39,6 +39,13 @@ export const metadata: Metadata = {
     description: "₱49/month. 7 days free, no credit card.",
     images: ["https://i.ibb.co/J91qPG0/Logo-1080x1080.png"],
   },
+  manifest: "/manifest.webmanifest",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0a0f",
+  width: "device-width",
+  initialScale: 1,
 };
 
 const jsonLd = {

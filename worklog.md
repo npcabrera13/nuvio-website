@@ -219,3 +219,47 @@ Unresolved issues or risks:
   - Add Open Graph meta image generation (og-image) using next/og.
   - Add a PWA manifest for mobile home-screen installation.
   - Add ARIA live region announcements for search results and form submissions.
+
+---
+Task ID: 5
+Agent: Z.ai Code (webDevReview cron — round 5)
+Task: Recurring QA + enhancement round. Assess project status, perform agent-browser QA, fix bugs if any, then implement next-phase enhancements. Strict no-backend rule still applies.
+
+Work Log:
+- Read worklog.md and reviewed round 4's completed state (18 sections + search + anime + email capture + scroll-reveal).
+- Performed fresh QA: dev.log healthy (GET / 200), lint clean, Stremio API HTTP 200 application/json, agent-browser opened with zero errors. 14 level-2 headings present.
+- QA RESULT: stable, zero bugs. Picked up the next recommended items: next/image config, keyboard navigation, PWA manifest, ARIA live regions, RT Certified Fresh section.
+- Implemented 6 enhancements:
+  1. **next/image optimization config** (`next.config.ts`): added `images.remotePatterns` for images.metahub.space, i.ytimg.com, i.ibb.co, cdn.jsdelivr.net, raw.githubusercontent.com + AVIF/WebP format optimization. (Note: kept `<img>` tags in components for now since swapping to next/image fill-mode requires CSS refactoring of aspect-ratio containers; the config is ready for future migration.)
+  2. **Keyboard navigation** (`use-scroller-keyboard.ts` hook): movie/series/anime/RT-fresh rows now respond to ArrowLeft/ArrowRight when focused. Added `tabIndex={0}`, `role="listbox"`, `aria-label`, and focus-visible ring to all 4 scrollers. Global ⌘K/Ctrl+K hotkey opens search (wired into SearchBar's keydown listener).
+  3. **PWA manifest** (`src/app/manifest.ts`): Web App Manifest at `/manifest.webmanifest` with Nuvio name, standalone display, #0a0a0f theme/background, 192+512 maskable icons. Moved `themeColor` to a `viewport` export per Next.js 16 guidance. Verified: `<link rel="manifest">` + `<meta name="theme-color">` present in HTML head.
+  4. **ARIA live regions**: search bar announces "X results for query" / "No results" / "Searching" via `aria-live="polite"` sr-only span. Lead form announces "Submitting" / "Success!" / "Error: ..." status. Error message uses `role="alert"`.
+  5. **RT Certified Fresh section** (`rt-fresh-row.tsx` + `fetchRtFreshMovies`): new "New & Trending" row pulling 18 RT Certified Fresh movies. Discovered the RT catalog only provides flixster posters (no backgrounds), so the fetch function constructs metahub background URLs from the IMDB id. Amber "FRESH" badges on each poster.
+  6. **Styling refinements**: all 4 horizontal scrollers now have consistent focus-visible rings (`focus-visible:ring-2 focus-visible:ring-violet-500/40`), listbox roles, and aria-labels for screen readers.
+- Re-verified with agent-browser:
+  - Page loads, no errors, no console warnings.
+  - RT Fresh section renders: 18 FRESH badges in DOM, "New & Trending" heading + "ROTTEN TOMATOES CERTIFIED FRESH" label present. VLM confirmed posters + badges visible (Power Ballad, Carolina Caroline, I Love Boosters).
+  - ⌘K hotkey: dispatched metaKey+k → search overlay opened (Search query textbox visible).
+  - Keyboard nav: focused "Now streaming movies" scroller, pressed ArrowRight → scrollLeft went from 0 to 986px. ✓
+  - PWA manifest: `curl /manifest.webmanifest` returns correct JSON (name, theme_color #0a0a0f, 2 icons). `<meta name="theme-color">` = #0a0a0f, `<link rel="manifest">` linked. ✓
+  - Lint clean, dev server healthy (GET / 200, /manifest.webmanifest 200), Stremio API HTTP 200 application/json (100% untouched).
+
+Stage Summary:
+- The Nuvio landing page now has 19 content sections (up from 18): added "New & Trending" RT Certified Fresh row.
+- Accessibility significantly improved: keyboard navigation on all horizontal scrollers, ⌘K search hotkey, ARIA live regions for search + form, listbox roles + aria-labels, focus-visible rings.
+- PWA-ready: web app manifest + theme-color meta allow mobile home-screen installation with the Nuvio brand icon and dark theme.
+- Image optimization configured for future next/image migration (AVIF/WebP, remote patterns for all external image hosts).
+- **The Stremio API remains 100% untouched.** Verified post-changes: `manifest.json` → HTTP 200 application/json.
+
+Unresolved issues or risks:
+- None blocking. All features verified working.
+- The `<img>` tags are still used (not next/image) because swapping requires CSS refactoring of aspect-ratio containers; the next.config images config is ready for when that migration happens.
+- Recommended next-phase enhancements (for the next webDevReview round):
+  - Migrate `<img>` to `next/image` in poster-heavy components (movie-row, series-row, anime-row, rt-fresh-row, genre-browser, hero) for automatic AVIF/WebP + lazy blur placeholders.
+  - Add an admin dashboard (password-protected) at a new route to view collected leads + export CSV.
+  - Add OG image generation using next/og (ImageResponse) for social share cards with the Nuvio brand + price.
+  - Wire the genre browser to update the URL hash (`#genre=Comedy`) for shareable genre links.
+  - Add a "Continue watching" / recently-viewed section using localStorage (no backend needed).
+  - Add a dark/light theme toggle (currently dark-only).
+  - Add page-transition animations with next/view-transitions.
+  - Add a sitemap.xml + robots.txt for SEO.

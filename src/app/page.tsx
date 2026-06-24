@@ -19,16 +19,18 @@ import {
   fetchTopMovies,
   fetchTopSeries,
   fetchTrendingAnime,
+  fetchRtFreshMovies,
   fetchMoviesByGenre,
 } from "@/lib/nuvio";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [movies, series, anime, initialGenreMovies] = await Promise.all([
+  const [movies, series, anime, rtFresh, initialGenreMovies] = await Promise.all([
     fetchTopMovies(20),
     fetchTopSeries(18),
     fetchTrendingAnime(18),
+    fetchRtFreshMovies(18),
     fetchMoviesByGenre("Action", 18),
   ]);
 
@@ -40,6 +42,7 @@ export default async function Home() {
           movies={movies}
           series={series}
           anime={anime}
+          rtFresh={rtFresh}
           initialGenreMovies={initialGenreMovies}
         />
         <Reveal><Stats /></Reveal>

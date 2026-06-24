@@ -191,6 +191,37 @@ export async function fetchTrendingAnime(
   }
 }
 
+/**
+ * Fetch RT Certified Fresh movies (critically acclaimed picks).
+ * The RT catalog only provides posters (from flixster) and IMDB ids, so we
+ * construct the metahub background URL from the imdb id when missing.
+ */
+export async function fetchRtFreshMovies(
+  limit = 18
+): Promise<NuvioMovie[]> {
+  try {
+    const res = await fetch(
+      `${NUVIO_API}/catalog/movie/tomatometadata___rtfresh_movie.json`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as { metas: CinemetaMeta[] };
+    const metas = data.metas ?? [];
+    const movies: NuvioMovie[] = metas
+      .filter((m) => m.poster && (m.id ?? m.imdb_id))
+      .map((m) => {
+        const id = m.id ?? m.imdb_id ?? "";
+        // Construct metahub background from imdb id if missing
+        const background =
+          m.background ?? `https://images.metahub.space/background/medium/${id}/img`;
+        return mapMeta({ ...m, background, id });
+      });
+    return movies.slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
 /** Genres offered by the Cinemeta movie catalog (for the browser filter). */
 export const MOVIE_GENRES = [
   "Action",

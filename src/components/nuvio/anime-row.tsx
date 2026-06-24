@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { ChevronLeft, ChevronRight, Star, Play, Sparkles } from "lucide-react";
 import type { NuvioMovie } from "@/lib/nuvio";
+import { useScrollerKeyboard } from "@/components/nuvio/use-scroller-keyboard";
 
 interface AnimeRowProps {
   anime: NuvioMovie[];
@@ -11,6 +12,7 @@ interface AnimeRowProps {
 
 export function AnimeRow({ anime, onOpenMovie }: AnimeRowProps) {
   const scroller = useRef<HTMLDivElement>(null);
+  useScrollerKeyboard(scroller);
   const list = anime.slice(0, 18);
 
   if (list.length === 0) return null;
@@ -55,7 +57,10 @@ export function AnimeRow({ anime, onOpenMovie }: AnimeRowProps) {
 
         <div
           ref={scroller}
-          className="nuvio-no-scrollbar flex gap-3 sm:gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth"
+          tabIndex={0}
+          role="listbox"
+          aria-label="Trending anime"
+          className="nuvio-no-scrollbar flex gap-3 sm:gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 scroll-smooth focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40 rounded-xl"
         >
           {list.map((m) => (
             <article

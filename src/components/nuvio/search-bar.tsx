@@ -24,9 +24,15 @@ export function SearchBar({ onOpenMovie }: SearchBarProps) {
     }
   }, [open]);
 
-  // Close on Escape
+  // Close on Escape; open on ⌘K / Ctrl+K
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // ⌘K / Ctrl+K opens search
+      if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        setOpen(true);
+        return;
+      }
       if (e.key === "Escape") {
         setOpen(false);
         setQuery("");
@@ -133,7 +139,21 @@ export function SearchBar({ onOpenMovie }: SearchBarProps) {
             </div>
 
             {/* Results */}
-            <div className="max-h-[50vh] overflow-y-auto nuvio-no-scrollbar">
+            <div
+              className="max-h-[50vh] overflow-y-auto nuvio-no-scrollbar"
+              role="region"
+              aria-label="Search results"
+            >
+              {/* Screen-reader live region */}
+              <span className="sr-only" aria-live="polite">
+                {loading
+                  ? "Searching"
+                  : query.trim().length >= 2
+                    ? results.length === 0
+                      ? `No results for ${query}`
+                      : `${results.length} result${results.length === 1 ? "" : "s"} for ${query}`
+                    : ""}
+              </span>
               {query.trim().length >= 2 && results.length === 0 && !loading && (
                 <div className="flex flex-col items-center py-10 text-center">
                   <Search className="h-8 w-8 text-muted-foreground/40 mb-2" />

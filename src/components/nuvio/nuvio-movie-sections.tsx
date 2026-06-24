@@ -7,6 +7,7 @@ import { Hero } from "@/components/nuvio/hero";
 import { MovieRow } from "@/components/nuvio/movie-row";
 import { SeriesRow } from "@/components/nuvio/series-row";
 import { AnimeRow } from "@/components/nuvio/anime-row";
+import { RtFreshRow } from "@/components/nuvio/rt-fresh-row";
 import { GenreBrowser } from "@/components/nuvio/genre-browser";
 import { MovieModal } from "@/components/nuvio/movie-modal";
 
@@ -14,6 +15,7 @@ interface NuvioMovieSectionsProps {
   movies: NuvioMovie[];
   series: NuvioMovie[];
   anime: NuvioMovie[];
+  rtFresh: NuvioMovie[];
   initialGenreMovies: NuvioMovie[];
 }
 
@@ -26,6 +28,7 @@ export function NuvioMovieSections({
   movies,
   series,
   anime,
+  rtFresh,
   initialGenreMovies,
 }: NuvioMovieSectionsProps) {
   const [selected, setSelected] = useState<NuvioMovie | null>(null);
@@ -35,6 +38,7 @@ export function NuvioMovieSections({
       <Navbar onOpenMovie={setSelected} />
       <Hero movies={movies} onOpenMovie={setSelected} />
       <MovieRow movies={movies} onOpenMovie={setSelected} />
+      <RtFreshRow movies={rtFresh} onOpenMovie={setSelected} />
       <SeriesRow series={series} onOpenMovie={setSelected} />
       <AnimeRow anime={anime} onOpenMovie={setSelected} />
       <GenreBrowser

@@ -101,8 +101,20 @@ export function FinalCta() {
               </form>
 
               {status === "error" && errorMsg && (
-                <p className="mt-3 text-sm text-red-200">{errorMsg}</p>
+                <p className="mt-3 text-sm text-red-200" role="alert">
+                  {errorMsg}
+                </p>
               )}
+              {/* Screen-reader live region for form status */}
+              <span className="sr-only" aria-live="polite">
+                {status === "loading"
+                  ? "Submitting your email"
+                  : status === "success"
+                    ? "Success! You're on the list. Check your inbox."
+                    : status === "error"
+                      ? `Error: ${errorMsg}`
+                      : ""}
+              </span>
 
               {/* Trust badges */}
               <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-white/80">
