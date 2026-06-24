@@ -39,7 +39,7 @@ export function MobileStickyCta() {
             </p>
           </div>
           <a
-            href="#trial"
+            href="/signup"
             className="nuvio-gradient-bg inline-flex items-center gap-1.5 rounded-xl px-5 py-3 text-sm font-semibold text-white active:scale-95 transition-transform"
           >
             <Play className="h-4 w-4 fill-current" />

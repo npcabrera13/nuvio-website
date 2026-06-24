@@ -63,7 +63,7 @@ export function PricingTiers() {
               </ul>
 
               <a
-                href="#trial"
+                href="/signup"
                 className={`mt-7 inline-flex items-center justify-center rounded-xl px-5 py-3.5 text-sm font-semibold transition-all active:scale-95 ${
                   tier.highlight
                     ? "nuvio-gradient-bg nuvio-glow text-white hover:scale-[1.02]"

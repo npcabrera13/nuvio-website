@@ -150,7 +150,7 @@ function ModalBody({
 
         {/* CTA */}
         <a
-          href="#trial"
+          href="/signup"
           className="mt-5 nuvio-gradient-bg nuvio-glow inline-flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white transition-transform hover:scale-[1.02] active:scale-95"
         >
           <Play className="h-4 w-4 fill-current" />

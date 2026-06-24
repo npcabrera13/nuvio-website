@@ -73,13 +73,13 @@ export function Navbar({ onOpenMovie }: NavbarProps) {
           <SearchBar onOpenMovie={onOpenMovie} />
           <ThemeToggle />
           <a
-            href="#login"
+            href="/login"
             className="px-4 py-2.5 text-sm font-semibold text-foreground/90 hover:text-foreground transition-colors"
           >
             Login
           </a>
           <a
-            href="#trial"
+            href="/signup"
             className="nuvio-gradient-bg nuvio-glow inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.03] active:scale-95"
           >
             Get 7 Days Free
@@ -92,7 +92,7 @@ export function Navbar({ onOpenMovie }: NavbarProps) {
           <SearchBar onOpenMovie={onOpenMovie} />
           <ThemeToggle />
           <a
-            href="#trial"
+            href="/signup"
             className="nuvio-gradient-bg inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white active:scale-95 transition-transform"
           >
             7 Days Free
@@ -127,14 +127,14 @@ export function Navbar({ onOpenMovie }: NavbarProps) {
             </a>
           ))}
           <a
-            href="#login"
+            href="/login"
             onClick={() => setOpen(false)}
             className="px-4 py-3 text-base font-semibold text-foreground hover:bg-white/5 rounded-xl transition-colors"
           >
             Login
           </a>
           <a
-            href="#trial"
+            href="/signup"
             onClick={() => setOpen(false)}
             className="nuvio-gradient-bg mt-1 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-base font-semibold text-white"
           >
