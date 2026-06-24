@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { X, Star, Play, Clock, Calendar, Users, Film } from "lucide-react";
 import type { NuvioMovie } from "@/lib/nuvio";
+import { LiteYouTube } from "@/components/nuvio/lite-youtube";
 
 interface MovieModalProps {
   movie: NuvioMovie | null;
@@ -102,6 +103,16 @@ function ModalBody({ movie }: { movie: NuvioMovie }) {
                 </span>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Trailer */}
+        {movie.trailerYtIds.length > 0 && (
+          <div className="mt-5">
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              <Play className="h-3.5 w-3.5" /> Official trailer
+            </p>
+            <LiteYouTube id={movie.trailerYtIds[0]} title={`${movie.name} trailer`} />
           </div>
         )}
 

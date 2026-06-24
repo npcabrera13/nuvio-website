@@ -21,6 +21,8 @@ export interface NuvioMovie {
   logo: string | null;
   runtime: string | null;
   cast: string[];
+  /** YouTube trailer video IDs (from Stremio trailerStreams). */
+  trailerYtIds: string[];
 }
 
 interface CinemetaMeta {
@@ -37,6 +39,36 @@ interface CinemetaMeta {
   logo?: string;
   runtime?: string | null;
   cast?: string[];
+  trailerStreams?: { ytId?: string; source?: string }[];
+  trailers?: { source?: string }[];
+}
+
+function mapMeta(m: CinemetaMeta): NuvioMovie {
+  const trailerYtIds: string[] = [];
+  if (m.trailerStreams) {
+    for (const t of m.trailerStreams) {
+      const id = t.ytId ?? t.source;
+      if (id && id.length === 11) trailerYtIds.push(id);
+    }
+  } else if (m.trailers) {
+    for (const t of m.trailers) {
+      if (t.source && t.source.length === 11) trailerYtIds.push(t.source);
+    }
+  }
+  return {
+    id: m.id ?? m.imdb_id ?? "",
+    name: m.name ?? "Untitled",
+    year: m.year ?? null,
+    imdbRating: m.imdbRating && m.imdbRating !== "" ? m.imdbRating : null,
+    genres: m.genres ?? m.genre ?? [],
+    description: m.description ?? null,
+    poster: (m.poster as string) ?? "",
+    background: (m.background as string) ?? "",
+    logo: m.logo ?? null,
+    runtime: m.runtime ?? null,
+    cast: m.cast ?? [],
+    trailerYtIds,
+  };
 }
 
 /**
@@ -54,24 +86,79 @@ export async function fetchTopMovies(limit = 20): Promise<NuvioMovie[]> {
     const metas = data.metas ?? [];
     const movies: NuvioMovie[] = metas
       .filter((m) => m.background && m.poster)
-      .map((m) => ({
-        id: m.id ?? m.imdb_id ?? "",
-        name: m.name ?? "Untitled",
-        year: m.year ?? null,
-        imdbRating: m.imdbRating && m.imdbRating !== "" ? m.imdbRating : null,
-        genres: m.genres ?? m.genre ?? [],
-        description: m.description ?? null,
-        poster: m.poster as string,
-        background: m.background as string,
-        logo: m.logo ?? null,
-        runtime: m.runtime ?? null,
-        cast: m.cast ?? [],
-      }));
+      .map(mapMeta);
     return movies.slice(0, limit);
   } catch {
     return [];
   }
 }
+
+/**
+ * Fetch movies for a specific genre from the Cinemeta catalog using the
+ * genre extra. Returns the full list (caller may slice).
+ */
+export async function fetchMoviesByGenre(
+  genre: string,
+  limit = 18
+): Promise<NuvioMovie[]> {
+  try {
+    const res = await fetch(
+      `${NUVIO_API}/catalog/movie/cinemeta___top/genre=${encodeURIComponent(
+        genre
+      )}.json`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as { metas: CinemetaMeta[] };
+    const metas = data.metas ?? [];
+    const movies: NuvioMovie[] = metas
+      .filter((m) => m.background && m.poster)
+      .map(mapMeta);
+    return movies.slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch top TV series from the Cinemeta series catalog.
+ */
+export async function fetchTopSeries(limit = 18): Promise<NuvioMovie[]> {
+  try {
+    const res = await fetch(
+      `${NUVIO_API}/catalog/series/cinemeta___top.json`,
+      { next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as { metas: CinemetaMeta[] };
+    const metas = data.metas ?? [];
+    const series: NuvioMovie[] = metas
+      .filter((m) => m.background && m.poster)
+      .map(mapMeta);
+    return series.slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
+/** Genres offered by the Cinemeta movie catalog (for the browser filter). */
+export const MOVIE_GENRES = [
+  "Action",
+  "Adventure",
+  "Animation",
+  "Comedy",
+  "Crime",
+  "Drama",
+  "Family",
+  "Fantasy",
+  "Horror",
+  "Mystery",
+  "Romance",
+  "Sci-Fi",
+  "Thriller",
+] as const;
+
+export type MovieGenre = (typeof MOVIE_GENRES)[number];
 
 export type ChannelCategory =
   | "Philippine"
@@ -187,6 +274,68 @@ export const COMPETITOR_BRANDS: BrandLogo[] = [
   { name: "Paramount+", slug: "paramountplus" },
   { name: "Cignal TV", slug: null },
   { name: "Sky Cable", slug: null },
+];
+
+/** Feature matrix for the competitor comparison table. */
+export interface ComparisonFeature {
+  label: string;
+  /** values per column: [Nuvio, Netflix, Disney+, HBO Max, Prime Video] */
+  values: [string | boolean, string | boolean, string | boolean, string | boolean, string | boolean];
+}
+
+export const COMPARISON_COLUMNS = [
+  "Nuvio",
+  "Netflix",
+  "Disney+",
+  "HBO Max",
+  "Prime Video",
+] as const;
+
+export const COMPARISON_FEATURES: ComparisonFeature[] = [
+  {
+    label: "Monthly price",
+    values: ["₱49", "₱549", "₱459", "₱599", "₱399"],
+  },
+  {
+    label: "Free trial",
+    values: ["7 days", false, false, false, "30 days"],
+  },
+  {
+    label: "Movies",
+    values: ["10,000+", "1,500+", "1,000+", "900+", "2,000+"],
+  },
+  {
+    label: "TV series",
+    values: ["3,000+", "1,200+", "800+", "600+", "1,500+"],
+  },
+  {
+    label: "Live TV channels",
+    values: ["27", false, false, false, false],
+  },
+  {
+    label: "Pinoy content",
+    values: [true, false, "Limited", false, false],
+  },
+  {
+    label: "4K streaming",
+    values: [true, true, true, true, "Select titles"],
+  },
+  {
+    label: "Simultaneous devices",
+    values: ["2", "1–2", "1–4", "1–3", "1–3"],
+  },
+  {
+    label: "No ads",
+    values: [true, "Premium only", "Premium only", true, true],
+  },
+  {
+    label: "GCash / Maya payment",
+    values: [true, false, false, false, false],
+  },
+  {
+    label: "Cancel anytime",
+    values: [true, true, true, true, true],
+  },
 ];
 
 export interface Review {
