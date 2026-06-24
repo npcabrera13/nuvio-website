@@ -67,7 +67,7 @@ export function Footer() {
   };
 
   return (
-    <footer className="mt-auto border-t border-white/10 bg-[#08080d]">
+    <footer className="mt-auto border-t border-border bg-background">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 lg:py-16">
         <div className="grid gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           {/* Brand column + newsletter */}

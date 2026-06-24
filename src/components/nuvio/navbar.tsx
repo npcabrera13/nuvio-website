@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Menu, X, Play } from "lucide-react";
 import { SearchBar } from "@/components/nuvio/search-bar";
+import { ThemeToggle } from "@/components/nuvio/theme-toggle";
 import type { NuvioMovie } from "@/lib/nuvio";
 
 const NAV_LINKS = [
@@ -70,6 +71,7 @@ export function Navbar({ onOpenMovie }: NavbarProps) {
         {/* Desktop CTAs */}
         <div className="hidden lg:flex items-center gap-3">
           <SearchBar onOpenMovie={onOpenMovie} />
+          <ThemeToggle />
           <a
             href="#login"
             className="px-4 py-2.5 text-sm font-semibold text-foreground/90 hover:text-foreground transition-colors"
@@ -85,9 +87,10 @@ export function Navbar({ onOpenMovie }: NavbarProps) {
           </a>
         </div>
 
-        {/* Mobile: search + primary CTA + hamburger */}
+        {/* Mobile: search + theme + primary CTA + hamburger */}
         <div className="flex items-center gap-2 lg:hidden">
           <SearchBar onOpenMovie={onOpenMovie} />
+          <ThemeToggle />
           <a
             href="#trial"
             className="nuvio-gradient-bg inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white active:scale-95 transition-transform"

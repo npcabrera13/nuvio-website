@@ -44,13 +44,52 @@
 }
 
 /*
- * Nuvio premium dark theme.
- * The entire landing page lives on a dark canvas, so we set the dark palette
- * directly on :root. Background #0a0a0f, cards #13131a, purple→pink accents.
+ * Nuvio theme system.
+ * Default (light) palette lives on :root. The dark palette (the Nuvio brand
+ * theme) is applied via the `.dark` class, managed by next-themes.
  */
 :root {
   --radius: 0.875rem;
 
+  /* Light theme: soft off-white with the same purple→pink brand accents */
+  --background: #faf9fc;
+  --foreground: #14141c;
+  --card: #ffffff;
+  --card-foreground: #14141c;
+  --popover: #ffffff;
+  --popover-foreground: #14141c;
+
+  --primary: #7c3aed;
+  --primary-foreground: #ffffff;
+  --secondary: #f1eef8;
+  --secondary-foreground: #14141c;
+  --muted: #f1eef8;
+  --muted-foreground: #6b6b7b;
+  --accent: #ec4899;
+  --accent-foreground: #ffffff;
+
+  --destructive: #ef4444;
+  --border: rgba(20, 20, 28, 0.1);
+  --input: rgba(20, 20, 28, 0.12);
+  --ring: #7c3aed;
+
+  --chart-1: #7c3aed;
+  --chart-2: #ec4899;
+  --chart-3: #8b5cf6;
+  --chart-4: #f472b6;
+  --chart-5: #a78bfa;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #14141c;
+  --sidebar-primary: #7c3aed;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1eef8;
+  --sidebar-accent-foreground: #14141c;
+  --sidebar-border: rgba(20, 20, 28, 0.1);
+  --sidebar-ring: #7c3aed;
+}
+
+.dark {
   --background: #0a0a0f;
   --foreground: #f5f5f7;
   --card: #13131a;
@@ -58,7 +97,6 @@
   --popover: #13131a;
   --popover-foreground: #f5f5f7;
 
-  /* Nuvio brand: purple #7c3aed → pink #ec4899 */
   --primary: #7c3aed;
   --primary-foreground: #ffffff;
   --secondary: #1c1c26;

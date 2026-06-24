@@ -21,7 +21,7 @@ interface MovieModalProps {
 export function MovieModal({ movie, onClose, onOpenMovie }: MovieModalProps) {
   return (
     <Dialog open={movie !== null} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl gap-0 p-0 overflow-hidden border-white/10 bg-[#0d0d14] max-h-[92vh]">
+      <DialogContent className="max-w-2xl gap-0 p-0 overflow-hidden border-border bg-card max-h-[92vh]">
         <DialogTitle className="sr-only">
           {movie ? `${movie.name} — Movie details` : "Movie details"}
         </DialogTitle>
@@ -173,11 +173,13 @@ function MoreLikeThis({
   onOpenMovie?: (m: NuvioMovie) => void;
 }) {
   const [recs, setRecs] = useState<NuvioMovie[]>([]);
+  const [loading, setLoading] = useState(true);
   const genre = movie.genres[0];
 
   useEffect(() => {
     if (!genre) return;
     let cancelled = false;
+    setLoading(true);
     fetch(`/api/movies?genre=${encodeURIComponent(genre)}&limit=12`)
       .then((r) => r.json())
       .then((d: { movies: NuvioMovie[] }) => {
@@ -185,14 +187,17 @@ function MoreLikeThis({
         // Exclude the current movie, take 6
         const filtered = (d.movies ?? []).filter((m) => m.id !== movie.id).slice(0, 6);
         setRecs(filtered);
+        setLoading(false);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
   }, [genre, movie.id]);
 
-  if (recs.length === 0) return null;
+  if (!genre) return null;
 
   return (
     <div className="mt-6">
@@ -200,7 +205,17 @@ function MoreLikeThis({
         <Sparkles className="h-3.5 w-3.5 text-pink-400" /> More {genre} movies
       </p>
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-        {recs.map((m) => (
+        {loading
+          ? Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="aspect-[2/3] rounded-lg border border-white/10 bg-white/5 overflow-hidden relative nuvio-shimmer"
+                aria-hidden="true"
+              />
+            ))
+          : recs.length === 0
+            ? null
+            : recs.map((m) => (
           <button
             key={m.id}
             type="button"
