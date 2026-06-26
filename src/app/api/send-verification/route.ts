@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { WorkerMailer } from "worker-mailer";
 
 export const runtime = "edge";
+
+// Tell Next.js not to bundle worker-mailer at build time
+// It will be loaded dynamically at runtime on Cloudflare
+export const dynamicImports = ["worker-mailer"];
 
 /**
  * POST /api/send-verification
@@ -9,11 +12,8 @@ export const runtime = "edge";
  *
  * Sends a branded verification email via Gmail SMTP using worker-mailer.
  * worker-mailer uses Cloudflare's native TCP sockets (cloudflare:sockets)
- * to connect to smtp.gmail.com — fully edge-compatible, no nodemailer needed.
- *
- * Env vars needed on Cloudflare:
- * - SMTP_EMAIL: nuviotv1@gmail.com
- * - SMTP_PASSWORD: hnpu oblp fizr ejnl (Gmail App Password)
+ * which only exist at runtime on Cloudflare Workers — not during build.
+ * That's why we use a dynamic import inside the handler.
  */
 
 export async function POST(req: NextRequest) {
@@ -29,15 +29,16 @@ export async function POST(req: NextRequest) {
       .map(() => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)])
       .join("");
 
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h expiry
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const baseUrl = req.nextUrl.origin;
     const verifyUrl = `${baseUrl}/verify?token=${token}`;
 
-    // Get SMTP credentials from env
     const smtpEmail = process.env.SMTP_EMAIL || "nuviotv1@gmail.com";
     const smtpPassword = process.env.SMTP_PASSWORD || "hnpu oblp fizr ejnl";
 
-    // Connect to Gmail SMTP via worker-mailer (uses Cloudflare TCP sockets)
+    // Dynamic import — only loads at runtime, not during build
+    const { WorkerMailer } = await import("worker-mailer");
+
     const mailer = await WorkerMailer.connect({
       credentials: {
         username: smtpEmail,
@@ -49,7 +50,6 @@ export async function POST(req: NextRequest) {
       secure: true,
     });
 
-    // Send the branded email
     await mailer.send({
       from: { name: "Nuvio", email: smtpEmail },
       to: { email },
