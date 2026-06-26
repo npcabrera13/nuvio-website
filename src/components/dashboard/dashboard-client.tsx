@@ -90,6 +90,8 @@ const PLANS = [
 
 function RenewalHero({ isExpired }: { isExpired: boolean }) {
   const [selected, setSelected] = useState(1); // default to BEST VALUE (90 days)
+  const [payLoading, setPayLoading] = useState(false);
+  const [payError, setPayError] = useState("");
   const plan = PLANS[selected];
 
   return (
@@ -144,16 +146,47 @@ function RenewalHero({ isExpired }: { isExpired: boolean }) {
         </div>
 
         {/* CTA button — big, glowing, irresistible */}
-        <button className="w-full relative overflow-hidden rounded-xl py-3.5 text-sm font-extrabold text-white transition-transform active:scale-[0.98] group">
+        <button
+          onClick={async () => {
+            setPayLoading(true);
+            try {
+              const res = await fetch("/api/paymongo/create-session", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ plan: String(plan.days) }),
+              });
+              const data = await res.json();
+              if (data.checkoutUrl) {
+                // Redirect to PayMongo checkout
+                window.location.href = data.checkoutUrl;
+              } else {
+                setPayError(data.error || "Failed to start payment");
+                setPayLoading(false);
+              }
+            } catch {
+              setPayError("Network error. Please try again.");
+              setPayLoading(false);
+            }
+          }}
+          disabled={payLoading}
+          className="w-full relative overflow-hidden rounded-xl py-3.5 text-sm font-extrabold text-white transition-transform active:scale-[0.98] group disabled:opacity-70"
+        >
           <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600" />
           <div className="absolute inset-0 bg-gradient-to-r from-pink-600 via-fuchsia-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
           <span className="relative flex items-center justify-center gap-2">
-            <Sparkles className="h-4 w-4" />
-            {isExpired ? "Reactivate now" : `Continue for ₱${plan.price}`}
-            <ArrowRight className="h-4 w-4" />
+            {payLoading ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Redirecting to payment…</>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                {isExpired ? "Reactivate now" : `Continue for ₱${plan.price}`}
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
           </span>
         </button>
+        {payError && <p className="mt-2 text-center text-xs text-red-400">{payError}</p>}
 
         {/* Trust badges */}
         <div className="mt-3 flex items-center justify-center gap-3 text-[10px] text-muted-foreground">
