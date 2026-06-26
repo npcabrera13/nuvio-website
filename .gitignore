@@ -52,3 +52,12 @@ prompt
 server.log
 # Skills directory
 /skills/
+# QA artifacts — not part of the app, don't push to GitHub
+/screenshots/
+/tool-results/
+/upload/
+/download/
+/worklog.md
+/ARCHITECTURE.md
+/APPLICATION_GUIDE.md
+/MIGRATION_GUIDE.md

@@ -4,7 +4,11 @@ const PLANS: Record<string, { days: number; price: number; description: string }
   "90": { days: 90, price: 12900, description: "Nuvio 90-day subscription" },
 };
 
-export const onRequestPost = async ({ request }: { request: Request }) => {
+interface Env {
+  PAYMONGO_SECRET_KEY: string;
+}
+
+export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
   try {
     const { plan } = await request.json();
     if (!plan || !PLANS[plan]) {
@@ -12,7 +16,8 @@ export const onRequestPost = async ({ request }: { request: Request }) => {
     }
 
     const selectedPlan = PLANS[plan];
-    const secretKey = process.env.PAYMONGO_SECRET_KEY;
+    // In Cloudflare Workers, env vars come from the `env` parameter, NOT process.env
+    const secretKey = env.PAYMONGO_SECRET_KEY;
     if (!secretKey) {
       return new Response(JSON.stringify({ error: "PayMongo not configured" }), { status: 500, headers: { "Content-Type": "application/json" } });
     }

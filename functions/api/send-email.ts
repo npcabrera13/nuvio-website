@@ -26,8 +26,15 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
       });
     }
 
-    const smtpEmail = env.SMTP_EMAIL || 'nuviotv1@gmail.com';
-    const smtpPassword = env.SMTP_PASSWORD || 'hnpu oblp fizr ejnl';
+    const smtpEmail = env.SMTP_EMAIL;
+    const smtpPassword = env.SMTP_PASSWORD;
+
+    if (!smtpEmail || !smtpPassword) {
+      return new Response(JSON.stringify({ error: 'SMTP credentials not configured. Set SMTP_EMAIL and SMTP_PASSWORD env vars in Cloudflare.' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     const mailer = await WorkerMailer.connect({
       credentials: {
