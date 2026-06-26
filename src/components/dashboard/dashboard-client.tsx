@@ -7,7 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { CHANNELS, type NuvioMovie } from "@/lib/nuvio";
 import {
   Loader2, Copy, Check, LogOut, Clock, Mail, Sparkles,
-  Tv, Film, ChevronRight, Crown, Gift,
+  Tv, Film, ChevronRight, Crown, Gift, Key,
   Heart, Star, Home, Play, Flame, Bookmark, BookmarkCheck,
   Search, Zap, ArrowRight, CheckCircle2
 } from "lucide-react";
@@ -308,6 +308,31 @@ function ChannelPill({ channel, index }: { channel: (typeof CHANNELS)[number]; i
 }
 
 // ═══════════════════════════════════════════════════════════════
+// COPY FIELD — individual field with copy button
+// ═══════════════════════════════════════════════════════════════
+
+function CopyField({ label, value, icon: Icon }: { label: string; value: string; icon: React.ComponentType<{ className?: string }> }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
+  };
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 min-w-0 transition-colors hover:border-white/[0.12]">
+      <div className="min-w-0">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 mb-0.5 flex items-center gap-1"><Icon className="h-3 w-3" /> {label}</p>
+        <code className="text-sm font-mono text-foreground truncate block min-w-0">{value}</code>
+      </div>
+      <button type="button" onClick={copy} aria-label={`Copy ${label}`}
+        className={`shrink-0 flex h-8 w-8 items-center justify-center rounded-lg transition-all active:scale-90 ${
+          copied ? "bg-green-500/15 text-green-400" : "bg-white/[0.06] text-foreground/50 hover:bg-white/[0.12] hover:text-foreground"
+        }`}>
+        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      </button>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN DASHBOARD
 // ═══════════════════════════════════════════════════════════════
 
@@ -316,6 +341,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
   const { user, profile, loading, signOut } = useAuth();
   const redirected = useRef(false);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+  const [copiedBoth, setCopiedBoth] = useState(false);
 
   useEffect(() => {
     try {
@@ -466,12 +492,48 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
           <ChannelStrip />
         </div>
 
+        {/* ─── NUVIO CREDENTIALS + COPY BOTH ─── */}
+        <div className="nuvio-solid-card rounded-2xl p-4 sm:p-5 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500/20 to-pink-500/20 text-violet-400 ring-1 ring-violet-500/20">
+              <Key className="h-4 w-4" />
+            </span>
+            <div>
+              <h3 className="text-sm font-bold">Your Nuvio account</h3>
+              <p className="text-[10px] text-muted-foreground">Log in at nuvio.tv with these</p>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <CopyField label="Nuvio email" value={profile.nuvioEmail} icon={Mail} />
+            <CopyField label="Nuvio password" value={profile.nuvioPassword || "••••••••"} icon={Key} />
+          </div>
+          {/* Copy both button */}
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText(`Email: ${profile.nuvioEmail}\nPassword: ${profile.nuvioPassword}`);
+              setCopiedBoth(true);
+              setTimeout(() => setCopiedBoth(false), 2000);
+            }}
+            className={`mt-3 w-full rounded-xl py-2.5 text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-1.5 ${
+              copiedBoth
+                ? "bg-green-500/15 text-green-400 border border-green-500/20"
+                : "nuvio-gradient-bg text-white"
+            }`}
+          >
+            {copiedBoth ? <><Check className="h-3.5 w-3.5" /> Copied both!</> : <><Copy className="h-3.5 w-3.5" /> Copy email + password</>}
+          </button>
+          {/* Go to nuvio.tv */}
+          <a href="https://nuvio.tv" target="_blank" rel="noopener noreferrer" className="mt-2 w-full rounded-xl border border-white/[0.08] bg-white/[0.02] py-2.5 text-xs font-semibold text-center hover:bg-white/[0.05] transition flex items-center justify-center gap-1.5">
+            <Play className="h-3.5 w-3.5 text-violet-400" /> Open nuvio.tv
+          </a>
+        </div>
+
         {/* ─── ACCOUNT + REFERRAL ─── */}
         <div className="grid sm:grid-cols-2 gap-3 mb-5">
           <div className="nuvio-solid-card rounded-2xl p-4">
-            <h3 className="text-sm font-bold mb-2.5 flex items-center gap-1.5"><Mail className="h-4 w-4 text-pink-400" /> Account</h3>
-            <div className="flex items-center justify-between gap-2 rounded-xl bg-white/[0.02] px-3 py-2">
-              <code className="text-xs font-mono text-foreground/70 truncate">{profile.email}</code>
+            <h3 className="text-sm font-bold mb-2.5 flex items-center gap-1.5"><Mail className="h-4 w-4 text-pink-400" /> Website login</h3>
+            <div className="flex items-center justify-between gap-2 rounded-xl bg-white/[0.02] px-3 py-2 min-w-0">
+              <code className="text-xs font-mono text-foreground/70 truncate min-w-0">{profile.email}</code>
               <button onClick={() => navigator.clipboard.writeText(profile.email || "")}
                 className="shrink-0 flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.06] text-foreground/50 hover:bg-white/[0.12] hover:text-foreground transition">
                 <Copy className="h-3 w-3" />
