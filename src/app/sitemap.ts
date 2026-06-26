@@ -1,5 +1,4 @@
 import type { MetadataRoute } from "next";
-export const runtime = "edge";
 
 /**
  * sitemap.xml — generated at /sitemap.xml

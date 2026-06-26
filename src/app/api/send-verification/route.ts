@@ -1,22 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "edge";
+// NOT edge runtime — this route needs Node.js for worker-mailer's TCP sockets
+// Cloudflare Pages with @cloudflare/next-on-pages handles Node.js routes
 
 /**
  * POST /api/send-verification
  * Body: { email, uid }
  *
- * Sends a branded verification email via Gmail SMTP.
+ * Sends a branded verification email via Gmail SMTP using worker-mailer.
+ * worker-mailer uses Cloudflare's native TCP sockets (cloudflare:sockets).
  *
- * On Cloudflare: uses worker-mailer (TCP sockets) — loaded via eval() to bypass webpack
- * On Vercel/local: worker-mailer won't work, falls back to Resend API or returns token
+ * This route is NOT edge runtime because:
+ * 1. eval() is not allowed in edge runtime
+ * 2. worker-mailer needs cloudflare:sockets which is a Node.js compat module
+ * 3. @cloudflare/next-on-pages converts Node.js routes to Cloudflare Workers
  */
-
-// This eval trick prevents webpack from seeing the import — it's resolved at runtime only
-const loadWorkerMailer = async () => {
-  const mod = await (eval('import("worker-mailer")') as Promise<{ WorkerMailer: any }>);
-  return mod.WorkerMailer;
-};
 
 export async function POST(req: NextRequest) {
   try {
@@ -67,9 +65,10 @@ export async function POST(req: NextRequest) {
 
     let emailSent = false;
 
-    // Try worker-mailer first (Cloudflare runtime)
+    // Use worker-mailer directly — works on Cloudflare Workers runtime
     try {
-      const WorkerMailer = await loadWorkerMailer();
+      const { WorkerMailer } = await import("worker-mailer");
+
       const mailer = await WorkerMailer.connect({
         credentials: { username: smtpEmail, password: smtpPassword },
         authType: "plain",
@@ -87,31 +86,6 @@ export async function POST(req: NextRequest) {
       emailSent = true;
     } catch (mailErr) {
       console.error("worker-mailer failed:", mailErr);
-    }
-
-    // Fallback: try Resend API if configured
-    if (!emailSent) {
-      const resendKey = process.env.RESEND_API_KEY;
-      if (resendKey) {
-        try {
-          const res = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${resendKey}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              from: "Nuvio <nuvio@resend.dev>",
-              to: [email],
-              subject: "Verify your Nuvio account ✓",
-              html: emailHtml,
-            }),
-          });
-          if (res.ok) emailSent = true;
-        } catch (resendErr) {
-          console.error("Resend failed:", resendErr);
-        }
-      }
     }
 
     return NextResponse.json({
