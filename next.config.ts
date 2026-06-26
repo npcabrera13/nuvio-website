@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "export",
   trailingSlash: true,
   typescript: {
     ignoreBuildErrors: true,
@@ -8,13 +9,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   images: {
     unoptimized: true,
-    remotePatterns: [
-      { protocol: "https", hostname: "images.metahub.space", pathname: "/**" },
-      { protocol: "https", hostname: "i.ytimg.com", pathname: "/vi/**" },
-      { protocol: "https", hostname: "i.ibb.co", pathname: "/**" },
-      { protocol: "https", hostname: "cdn.jsdelivr.net", pathname: "/**" },
-      { protocol: "https", hostname: "raw.githubusercontent.com", pathname: "/**" },
-    ],
   },
 };
 
