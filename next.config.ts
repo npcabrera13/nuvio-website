@@ -6,36 +6,15 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
-  turbopack: {},
   images: {
+    unoptimized: true,
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "images.metahub.space",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "i.ytimg.com",
-        pathname: "/vi/**",
-      },
-      {
-        protocol: "https",
-        hostname: "i.ibb.co",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "cdn.jsdelivr.net",
-        pathname: "/**",
-      },
-      {
-        protocol: "https",
-        hostname: "raw.githubusercontent.com",
-        pathname: "/**",
-      },
+      { protocol: "https", hostname: "images.metahub.space", pathname: "/**" },
+      { protocol: "https", hostname: "i.ytimg.com", pathname: "/vi/**" },
+      { protocol: "https", hostname: "i.ibb.co", pathname: "/**" },
+      { protocol: "https", hostname: "cdn.jsdelivr.net", pathname: "/**" },
+      { protocol: "https", hostname: "raw.githubusercontent.com", pathname: "/**" },
     ],
-    formats: ["image/avif", "image/webp"],
   },
 };
 
