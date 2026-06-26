@@ -431,17 +431,15 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
         )}
 
         {/* ─── QUICK ACTIONS ─── */}
-        <div className="grid grid-cols-3 gap-2 mb-5">
-          {[
-            { Icon: Search, label: "Browse", href: "/#browse", color: "text-cyan-400" },
-            { Icon: Tv, label: "Live TV", href: "/#channels", color: "text-pink-400" },
-            { Icon: Flame, label: "Trending", href: "/#now-streaming", color: "text-amber-400" },
-          ].map(({ Icon, label, href, color }) => (
-            <a key={label} href={href} className="nuvio-solid-card rounded-xl p-3 flex flex-col items-center gap-1 hover:border-white/15 transition group">
-              <Icon className={`h-5 w-5 ${color} group-hover:scale-110 transition`} />
-              <span className="text-xs font-semibold">{label}</span>
-            </a>
-          ))}
+        <div className="grid grid-cols-2 gap-2 mb-5">
+          <a href="https://nuvio.tv" target="_blank" rel="noopener noreferrer" className="nuvio-gradient-bg rounded-xl p-3 flex flex-col items-center gap-1 transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-violet-900/20">
+            <Play className="h-5 w-5 text-white" />
+            <span className="text-xs font-bold text-white">Go to nuvio.tv</span>
+          </a>
+          <a href="/#browse" className="nuvio-solid-card rounded-xl p-3 flex flex-col items-center gap-1 hover:border-white/15 transition group">
+            <Search className="h-5 w-5 text-cyan-400 group-hover:scale-110 transition" />
+            <span className="text-xs font-semibold">Browse movies</span>
+          </a>
         </div>
 
         {/* ─── WATCHLIST ─── */}
