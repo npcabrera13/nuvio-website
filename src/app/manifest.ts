@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+export const runtime = "edge";
 
 /**
  * Web App Manifest for PWA / mobile home-screen installation.

@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// NOT edge runtime — this route needs Node.js for worker-mailer's TCP sockets
-// Cloudflare Pages with @cloudflare/next-on-pages handles Node.js routes
+export const runtime = "edge";
 
 /**
  * POST /api/send-verification
  * Body: { email, uid }
  *
- * Sends a branded verification email via Gmail SMTP using worker-mailer.
- * worker-mailer uses Cloudflare's native TCP sockets (cloudflare:sockets).
+ * Edge-compatible: calls the Cloudflare Pages Function at /api/send-email
+ * which uses worker-mailer (native Cloudflare TCP sockets) for Gmail SMTP.
  *
- * This route is NOT edge runtime because:
- * 1. eval() is not allowed in edge runtime
- * 2. worker-mailer needs cloudflare:sockets which is a Node.js compat module
- * 3. @cloudflare/next-on-pages converts Node.js routes to Cloudflare Workers
+ * The Pages Function lives in functions/api/send-email.ts and bypasses
+ * the Next.js build process entirely — worker-mailer works there because
+ * there's no webpack/turbopack to interfere with cloudflare:sockets.
  */
 
 export async function POST(req: NextRequest) {
@@ -31,9 +29,6 @@ export async function POST(req: NextRequest) {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const baseUrl = req.nextUrl.origin;
     const verifyUrl = `${baseUrl}/verify?token=${token}`;
-
-    const smtpEmail = process.env.SMTP_EMAIL || "nuviotv1@gmail.com";
-    const smtpPassword = process.env.SMTP_PASSWORD || "hnpu oblp fizr ejnl";
 
     const emailHtml = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; background: #0a0a0f; padding: 40px 24px; border-radius: 16px;">
@@ -63,29 +58,19 @@ export async function POST(req: NextRequest) {
       </div>
     `;
 
+    // Call the Cloudflare Pages Function (functions/api/send-email.ts)
+    // This bypasses Next.js build — worker-mailer runs natively on Cloudflare
     let emailSent = false;
-
-    // Use worker-mailer directly — works on Cloudflare Workers runtime
     try {
-      const { WorkerMailer } = await import("worker-mailer");
-
-      const mailer = await WorkerMailer.connect({
-        credentials: { username: smtpEmail, password: smtpPassword },
-        authType: "plain",
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
+      const res = await fetch(`${baseUrl}/api/send-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: email, subject: "Verify your Nuvio account ✓", html: emailHtml }),
       });
-
-      await mailer.send({
-        from: { name: "Nuvio", email: smtpEmail },
-        to: { email },
-        subject: "Verify your Nuvio account ✓",
-        html: emailHtml,
-      });
-      emailSent = true;
-    } catch (mailErr) {
-      console.error("worker-mailer failed:", mailErr);
+      const data = await res.json();
+      emailSent = data.success === true;
+    } catch (fetchErr) {
+      console.error("Failed to call send-email function:", fetchErr);
     }
 
     return NextResponse.json({

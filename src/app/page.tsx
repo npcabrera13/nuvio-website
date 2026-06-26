@@ -1,4 +1,5 @@
 import { NuvioMovieSections } from "@/components/nuvio/nuvio-movie-sections";
+export const runtime = "edge";
 import { Stats } from "@/components/nuvio/stats";
 import { ChannelsGrid } from "@/components/nuvio/channels-grid";
 import { HowItWorks } from "@/components/nuvio/how-it-works";
