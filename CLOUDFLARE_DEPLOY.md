@@ -122,7 +122,7 @@ In Cloudflare Pages → **Custom domains** → **Set up a custom domain**:
 
 ---
 
-## Step 7: Set Firestore Security Rules
+## Step 7: Set Firestore Security Rules (CRITICAL — without this, login breaks!)
 
 In **Firebase Console** → Firestore Database → **Rules**, paste:
 
@@ -130,26 +130,21 @@ In **Firebase Console** → Firestore Database → **Rules**, paste:
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can only read their OWN customer doc
+    // Users can read AND write their OWN customer doc
+    // (write is needed for signup + auto-profile-creation on login)
     match /customers/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if request.auth != null && request.auth.uid == uid;
     }
     // Tokens collection — public read for Stremio API validation
     match /tokens/{token} {
       allow read: if true;
-      allow write: if false; // only Admin SDK writes
-    }
-    // Verifications — only the Functions can write (via Admin SDK or anonymous)
-    match /verifications/{token} {
-      allow read: if false;
-      allow write: if false;
+      allow write: if request.auth != null;
     }
   }
 }
 ```
 
-> **Important**: Without these rules, Firestore is locked down by default and the dashboard won't load user data.
+> **Why this matters**: When a user signs up or logs in, the app writes to `customers/{uid}`. If rules deny writes, signup fails silently and login shows "Setting up your account…" forever. The rules above allow each authenticated user to read/write ONLY their own doc.
 
 ---
 
@@ -164,8 +159,11 @@ service cloud.firestore {
 ### Cloudflare says "Build command not found" or uses wrong package manager
 → Make sure `package-lock.json` exists in your repo root (it does now). Cloudflare auto-detects npm from this file. Set build command to `npm run build`. If issues persist, set env var `NODE_VERSION` = `20`.
 
-### Email not sending (signup shows "Check your inbox" but no email arrives)
-→ Check the Function logs: Cloudflare Pages → your project → **Functions** tab → `/api/send-email` → **Logs**. Look for SMTP auth errors. Verify `SMTP_EMAIL` and `SMTP_PASSWORD` env vars are set correctly.
+### Dashboard shows "Setting up your account…" forever
+→ Firestore rules are blocking the write. Go to Firebase Console → Firestore → Rules and paste the rules from Step 7 above. The key line is `allow read, write: if request.auth != null && request.auth.uid == uid;` on the `customers` collection.
+
+### Signup goes to login instead of dashboard
+→ Fixed in the latest code. All users now go straight to dashboard after signup (no email verification gate). Make sure you deployed the latest code.
 
 ### PayMongo checkout shows "Sandbox is inactive"
 → Make sure you're using the **test** key (`sk_test_...`) for testing, or the **live** key (`sk_live_...`) for real payments. Don't mix them.

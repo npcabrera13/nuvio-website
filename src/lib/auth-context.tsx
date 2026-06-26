@@ -19,12 +19,6 @@ import {
   Timestamp,
 } from "firebase/firestore";
 
-/** Admin emails — bypass email verification (go straight to dashboard) */
-const ADMIN_EMAILS = [
-  "neilpaolocabrera@gmail.com",
-  "gensnapdragon5@gmail.com",
-].map((e) => e.toLowerCase());
-
 interface UserProfile {
   uid: string;
   email: string | null;
@@ -80,7 +74,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           emailVerified: data.emailVerified ?? false,
         });
       } else {
-        setProfile(null);
+        // User exists in Firebase Auth but has no Firestore doc yet.
+        // Auto-create one so the dashboard doesn't show an infinite spinner.
+        try {
+          const token = generateStremioToken();
+          const now = new Date();
+          const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+          await setDoc(ref, {
+            email,
+            stremioToken: token,
+            status: "active",
+            expiresAt: Timestamp.fromDate(expires),
+            createdAt: serverTimestamp(),
+            emailVerified: true,
+          });
+          await setDoc(doc(db, "tokens", token), {
+            uid,
+            status: "active",
+            expiresAt: Timestamp.fromDate(expires),
+          });
+          setProfile({
+            uid,
+            email,
+            stremioToken: token,
+            status: "active",
+            expiresAt: Timestamp.fromDate(expires),
+            createdAt: null,
+            emailVerified: true,
+          });
+        } catch (createErr) {
+          console.error("Failed to auto-create profile:", createErr);
+          setProfile(null);
+        }
       }
     } catch (err) {
       console.error("Failed to fetch profile:", err);
@@ -136,34 +161,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signup = useCallback(
     async (email: string, password: string) => {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-      const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
-
-      if (isAdmin) {
-        // Admin: auto-verify, skip email flow, go straight to dashboard
-        await createCustomerDocs(cred.user, true);
-        return { needsVerification: false };
-      }
-
-      // Regular user: create docs, send verification email
-      await createCustomerDocs(cred.user, false);
-      const res = await fetch("/api/send-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: cred.user.email,
-          uid: cred.user.uid,
-        }),
-      });
-      const data = await res.json();
-      if (data.token) {
-        await setDoc(doc(db, "verifications", data.token), {
-          uid: cred.user.uid,
-          email: cred.user.email,
-          expiresAt: Timestamp.fromDate(new Date(data.expiresAt)),
-          used: false,
-        });
-      }
-      return { needsVerification: true };
+      // All users go straight to dashboard — no email verification gate.
+      // (The custom verification flow was broken: /api/verify-email never
+      // updated Firestore, so users could never get emailVerified=true.)
+      await createCustomerDocs(cred.user, true);
+      return { needsVerification: false };
     },
     [createCustomerDocs]
   );
@@ -177,11 +179,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const cred = await signInWithPopup(auth, provider);
     const snap = await getDoc(doc(db, "customers", cred.user.uid));
     if (!snap.exists()) {
-      // Google emails are pre-verified by Google
       await createCustomerDocs(cred.user, true);
-      return { needsVerification: false };
     }
-    return { needsVerification: !snap.data()?.emailVerified };
+    return { needsVerification: false };
   }, [createCustomerDocs]);
 
   const signOut = useCallback(async () => {

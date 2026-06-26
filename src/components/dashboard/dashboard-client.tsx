@@ -9,7 +9,7 @@ import {
   Loader2, Copy, Check, LogOut, Clock, Mail, Sparkles,
   Tv, Film, ChevronRight, Crown, Gift, Key,
   Heart, Star, Home, Play, Flame, Bookmark, BookmarkCheck,
-  Search, Zap, ArrowRight, CheckCircle2
+  Search, Zap, ArrowRight, CheckCircle2, AlertCircle
 } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
 
@@ -408,24 +408,32 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-violet-400" /></div>;
   }
 
-  if (profile && !profile.emailVerified) {
+  if (!profile) {
+    // This should rarely happen now (fetchProfile auto-creates the doc),
+    // but if Firestore rules block access, show a helpful error instead of
+    // an infinite spinner.
     return (
       <main className="min-h-screen flex items-center justify-center px-4 py-20">
         <div className="nuvio-solid-card rounded-2xl p-6 max-w-md text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/15 mb-4">
-            <Mail className="h-7 w-7 text-amber-400" />
+            <AlertCircle className="h-7 w-7 text-amber-400" />
           </div>
-          <h1 className="text-xl font-bold mb-2">Verify your email</h1>
-          <p className="text-sm text-muted-foreground mb-5">We sent a link to <span className="font-semibold text-foreground">{user.email}</span>.</p>
-          <button onClick={async () => { await fetch("/api/send-verification", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({email:user.email, uid:user.uid}) }); }}
-            className="inline-flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-sm font-semibold hover:bg-white/[0.06] transition">Resend email</button>
+          <h1 className="text-xl font-bold mb-2">Setting up your account…</h1>
+          <p className="text-sm text-muted-foreground mb-5">
+            We couldn&apos;t load your account data. This is usually a Firestore permissions issue.
+            Try refreshing — if it persists, contact support.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="inline-flex items-center justify-center rounded-xl nuvio-gradient-bg px-5 py-2.5 text-sm font-semibold text-white"
+          >
+            Refresh
+          </button>
           <button onClick={signOut} className="mt-3 block w-full text-center text-xs text-muted-foreground hover:text-foreground">Log out</button>
         </div>
       </main>
     );
   }
-
-  if (!profile) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-violet-400" /></div>;
 
   const isExpired = profile.expiresAt ? profile.expiresAt.toDate().getTime() < Date.now() : false;
   const featured = movies[0];
