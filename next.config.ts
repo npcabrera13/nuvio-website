@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   reactStrictMode: false,
+  turbopack: {},
   images: {
     remotePatterns: [
       {
@@ -36,10 +37,6 @@ const nextConfig: NextConfig = {
     ],
     formats: ["image/avif", "image/webp"],
   },
-  // Next.js 16 uses Turbopack by default — must have empty turbopack config
-  // to silence the "webpack config without turbopack config" error
-  turbopack: {},
-  serverExternalPackages: ["worker-mailer"],
 };
 
 export default nextConfig;
