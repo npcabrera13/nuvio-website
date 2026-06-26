@@ -47,17 +47,17 @@ export function Footer() {
     setStatus("loading");
     setErrorMsg("");
     try {
-      const res = await fetch("/api/leads", {
+      // Call the Cloudflare Pages Function for email
+      const res = await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({
+          to: email.trim(),
+          subject: "New newsletter signup",
+          html: `<p>New signup: ${email.trim()}</p>`,
+        }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setStatus("error");
-        setErrorMsg(data.error ?? "Something went wrong.");
-        return;
-      }
+      if (!res.ok) throw new Error("Failed");
       setStatus("success");
       setEmail("");
     } catch {
