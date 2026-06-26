@@ -1,4 +1,5 @@
 import { fetchTopMovies, fetchTopSeries } from "@/lib/nuvio";
+export const runtime = "edge";
 import { DashboardClient } from "@/components/dashboard/dashboard-client";
 
 export const dynamic = "force-dynamic";
