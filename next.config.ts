@@ -36,22 +36,10 @@ const nextConfig: NextConfig = {
     ],
     formats: ["image/avif", "image/webp"],
   },
-  // Tell Next.js to not try to resolve cloudflare:sockets during build
-  // It only exists at runtime on Cloudflare Workers
+  // Next.js 16 uses Turbopack by default — must have empty turbopack config
+  // to silence the "webpack config without turbopack config" error
+  turbopack: {},
   serverExternalPackages: ["worker-mailer"],
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      // Ignore cloudflare:sockets module during build — it's a runtime-only native module
-      config.resolve = config.resolve || {};
-      config.resolve.fallback = config.resolve.fallback || {};
-      config.resolve.fallback["cloudflare:sockets"] = false;
-      
-      // Also handle it in externals
-      config.externals = config.externals || [];
-      config.externals.push({ "cloudflare:sockets": "cloudflare:sockets" });
-    }
-    return config;
-  },
 };
 
 export default nextConfig;
