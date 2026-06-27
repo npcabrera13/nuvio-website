@@ -107,14 +107,15 @@ const assignTokenToUser = async (
     throw new Error(ACCOUNTS_FULL_ERROR);
   }
 
-  // Find the first token that's NOT assigned to anyone
+  // Find the first token that's NOT assigned to anyone AND has Nuvio credentials
   let tokenDoc = null;
   let tokenData = null;
   for (const doc_snap of snapshot.docs) {
     const data = doc_snap.data();
     const assignedTo = data.assignedTo;
-    // Available = assignedTo is null, empty, or missing
-    if (!assignedTo || assignedTo === "" || assignedTo === null) {
+    const hasCredentials = data.nuvioEmail && data.nuvioEmail.trim() !== "";
+    // Available = assignedTo is null/empty AND has Nuvio credentials set by admin
+    if ((!assignedTo || assignedTo === "" || assignedTo === null) && hasCredentials) {
       tokenDoc = doc_snap;
       tokenData = data;
       break;
@@ -131,12 +132,13 @@ const assignTokenToUser = async (
   const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7-day trial
 
   // 2. Update the token doc with the user's info (1 write).
-  //    Set assignedTo so the admin panel can track who has it.
+  //    Set assignedTo to the user's EMAIL (not UID) so the admin panel
+  //    can display who the account belongs to (shows first 8 chars).
   //    The 7-day expiry OVERWRITES whatever the admin set — the free trial
   //    is always 7 days from verification, regardless of admin's placeholder.
   await updateDoc(doc(db, "customers", tokenId), {
     name: userEmail ?? "",
-    assignedTo: firebaseUser.uid,
+    assignedTo: userEmail ?? "",
     status: "active",
     expiresAt: Timestamp.fromDate(expires),
   });
