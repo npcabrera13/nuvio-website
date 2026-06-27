@@ -21,23 +21,12 @@ export function GenreBrowser({ onOpenMovie, initialMovies }: GenreBrowserProps) 
     initialMovies.length > 0 ? MOVIE_GENRES[0] : ""
   );
 
-  // On mount, read genre from URL hash if present (e.g. #browse&genre=Comedy)
+  // On mount, clear any URL hash that might have been set before
   useEffect(() => {
-    const match = window.location.hash.match(/genre=([A-Za-z-]+)/);
-    const g = match?.[1];
-    if (g && (MOVIE_GENRES as readonly string[]).includes(g) && g !== MOVIE_GENRES[0]) {
-      setGenre(g);
+    if (typeof window !== "undefined" && window.location.hash) {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
   }, []);
-
-  // Sync genre -> URL hash (shareable links)
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const expected = `#browse&genre=${genre}`;
-    if (window.location.hash !== expected) {
-      window.history.replaceState(null, "", expected);
-    }
-  }, [genre]);
 
   useEffect(() => {
     // No-op if we already have data for this genre.

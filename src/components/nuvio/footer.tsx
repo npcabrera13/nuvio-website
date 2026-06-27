@@ -83,7 +83,7 @@ export function Footer() {
               <span className="text-xl font-bold tracking-tight">Nuvio</span>
             </a>
             <p className="mt-4 text-sm text-muted-foreground max-w-xs leading-relaxed">
-              All your streaming in one Philippine app. Movies, series, anime, and live channels — from ₱49/month.
+              All your streaming in one app. Movies, series, anime, and live channels — from ₱49/month.
             </p>
 
             {/* Newsletter signup */}
@@ -176,9 +176,14 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-white/10 pt-6">
-          <p className="text-xs text-muted-foreground text-center sm:text-left">
-            © {new Date().getFullYear()} Nuvio. All rights reserved. Made in the Philippines.
-          </p>
+          <div className="text-center sm:text-left">
+            <p className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} Nuvio. All rights reserved.
+            </p>
+            <p className="mt-1 text-[10px] text-muted-foreground/60 max-w-md">
+              Nuvio is an independent streaming aggregator. This is not the official Nuvio app — we provide API access and account management. Trademarks belong to their respective owners.
+            </p>
+          </div>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-green-400" /> All systems operational

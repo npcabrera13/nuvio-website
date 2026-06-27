@@ -143,7 +143,7 @@ export function SavingsCalculator() {
               })}
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              Tap to add or remove. Most Filipinos subscribe to 3–5 of these.
+              Tap to add or remove. Most users subscribe to 3–5 of these.
             </p>
           </div>
 

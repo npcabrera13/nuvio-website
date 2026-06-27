@@ -26,8 +26,29 @@ export function Hero({ movies, onOpenMovie }: HeroProps) {
 
   return (
     <section id="top" className="relative pt-28 sm:pt-32 lg:pt-36 pb-16 lg:pb-24 overflow-hidden">
-      {/* Ambient background */}
-      <div className="absolute inset-0 -z-10">
+      {/* Mobile: movie carousel as background (saves space) */}
+      {top5.length > 0 && (
+        <div className="lg:hidden absolute inset-0 -z-10">
+          {top5.map((m, i) => (
+            <div
+              key={m.id}
+              className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out"
+              style={{ opacity: i === active ? 0.35 : 0 }}
+            >
+              <img
+                src={m.background}
+                alt=""
+                className="h-full w-full object-cover"
+                loading={i === 0 ? "eager" : "lazy"}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/80 to-[#0a0a0f]/60" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Desktop: ambient background */}
+      <div className="hidden lg:block absolute inset-0 -z-10">
         <div className="absolute inset-0 nuvio-grid-bg" />
         <div className="absolute -top-32 -left-24 h-[28rem] w-[28rem] rounded-full bg-violet-600/20 blur-[120px]" />
         <div className="absolute -top-24 right-0 h-[26rem] w-[26rem] rounded-full bg-pink-500/15 blur-[120px]" />
@@ -48,7 +69,7 @@ export function Hero({ movies, onOpenMovie }: HeroProps) {
           </h1>
 
           <p className="mt-5 text-base sm:text-lg text-muted-foreground max-w-xl">
-            Netflix, Disney+, HBO Max, Prime Video and dozens of live channels — bundled into one Philippine streaming app. No multiple subscriptions. No multiple logins.
+            Netflix, Disney+, HBO Max, Prime Video and dozens of live channels — bundled into one streaming app. No multiple subscriptions. No multiple logins.
           </p>
 
           {/* Price badge */}
@@ -92,8 +113,8 @@ export function Hero({ movies, onOpenMovie }: HeroProps) {
           </div>
         </div>
 
-        {/* Right: movie carousel */}
-        <div className="relative nuvio-rise" style={{ animationDelay: "120ms" }}>
+        {/* Right: movie carousel (desktop only) */}
+        <div className="hidden lg:block relative nuvio-rise" style={{ animationDelay: "120ms" }}>
           <div className="relative aspect-[4/5] sm:aspect-[5/4] lg:aspect-[4/5] w-full rounded-3xl overflow-hidden border border-white/10 shadow-2xl shadow-violet-900/30">
             {/* Backdrop layers */}
             {top5.length === 0 ? (

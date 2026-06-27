@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { db } from "@/lib/firebase";
 import { CHANNELS, type NuvioMovie } from "@/lib/nuvio";
 import {
   Loader2, Copy, Check, LogOut, Clock, Mail, Sparkles,
@@ -11,7 +12,7 @@ import {
   Heart, Star, Home, Play, Flame, Bookmark, BookmarkCheck,
   Search, Zap, ArrowRight, CheckCircle2, Users
 } from "lucide-react";
-import { Timestamp } from "firebase/firestore";
+import { Timestamp, doc, updateDoc } from "firebase/firestore";
 
 // ═══════════════════════════════════════════════════════════════
 // CIRCULAR COUNTDOWN — compact, with glow
@@ -82,11 +83,17 @@ function CircularTimer({ expiresAt, size = 120 }: { expiresAt: Timestamp | null;
 // RENEWAL HERO — the conversion centerpiece, front and center
 // ═══════════════════════════════════════════════════════════════
 
-const PLAN = { days: 30, price: 49 };
+const PLANS = [
+  { id: "30", days: 30, price: 49, label: "1 month", color: "from-violet-500 to-pink-500", popular: true },
+  { id: "7", days: 7, price: 29, label: "1 week", color: "from-blue-500 to-cyan-500", popular: false },
+  { id: "3", days: 3, price: 19, label: "3 days", color: "from-emerald-500 to-teal-500", popular: false },
+];
 
 function RenewalHero({ isExpired }: { isExpired: boolean }) {
+  const [selected, setSelected] = useState(0);
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState("");
+  const plan = PLANS[selected];
 
   return (
     <div className="relative overflow-hidden rounded-2xl mb-5">
@@ -113,13 +120,32 @@ function RenewalHero({ isExpired }: { isExpired: boolean }) {
           </div>
         </div>
 
-        {/* Price display — simple, one price */}
-        <div className="flex items-baseline justify-center gap-2 mb-4 py-2">
-          <span className="text-4xl font-extrabold bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">₱{PLAN.price}</span>
-          <span className="text-sm text-muted-foreground">/ month</span>
+        {/* Plan selector — 3 buttons */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {PLANS.map((p, i) => (
+            <button
+              key={p.id}
+              onClick={() => setSelected(i)}
+              className={`relative rounded-xl p-3 text-center transition-all duration-200 ${
+                selected === i
+                  ? `bg-gradient-to-br ${p.color} shadow-lg scale-105`
+                  : "bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08]"
+              }`}
+            >
+              {p.popular && (
+                <span className={`absolute -top-2 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-[8px] font-bold ${
+                  selected === i ? "bg-white text-violet-700" : "nuvio-gradient-bg text-white"
+                }`}>
+                  POPULAR
+                </span>
+              )}
+              <p className={`text-[10px] font-semibold ${selected === i ? "text-white/80" : "text-muted-foreground"}`}>{p.label}</p>
+              <p className={`text-xl font-extrabold ${selected === i ? "text-white" : "text-foreground"}`}>₱{p.price}</p>
+            </button>
+          ))}
         </div>
 
-        {/* CTA button — big, glowing, irresistible */}
+        {/* CTA button */}
         <button
           onClick={async () => {
             setPayLoading(true);
@@ -127,7 +153,7 @@ function RenewalHero({ isExpired }: { isExpired: boolean }) {
               const res = await fetch("/api/paymongo/create-session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ plan: String(PLAN.days) }),
+                body: JSON.stringify({ plan: plan.id }),
               });
               const data = await res.json();
               if (data.checkoutUrl) {
@@ -146,14 +172,13 @@ function RenewalHero({ isExpired }: { isExpired: boolean }) {
         >
           <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600" />
           <div className="absolute inset-0 bg-gradient-to-r from-pink-600 via-fuchsia-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-          <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
           <span className="relative flex items-center justify-center gap-2">
             {payLoading ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> Redirecting to payment…</>
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                {isExpired ? "Reactivate now" : `Continue for ₱${PLAN.price}`}
+                {isExpired ? "Reactivate now" : `Continue for ₱${plan.price}`}
                 <ArrowRight className="h-4 w-4" />
               </>
             )}
@@ -344,10 +369,47 @@ function CopyField({ label, value, icon: Icon }: { label: string; value: string;
 
 export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; series: NuvioMovie[] }) {
   const router = useRouter();
-  const { user, profile, loading, signOut } = useAuth();
+  const { user, profile, loading, signOut, refreshProfile } = useAuth();
   const redirected = useRef(false);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [copiedBoth, setCopiedBoth] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<"processing" | "success" | "failed" | null>(null);
+
+  // Handle PayMongo payment redirect: /dashboard?payment=success&plan=30
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("payment");
+    const plan = params.get("plan");
+    if (!status || !user || !profile?.tokenId) return;
+
+    if (status === "success" && plan) {
+      setPaymentStatus("processing");
+      const daysToAdd = parseInt(plan, 10);
+      const now = new Date();
+      const currentExpiry = profile.expiresAt ? profile.expiresAt.toDate() : now;
+      const base = currentExpiry.getTime() > now.getTime() ? currentExpiry : now;
+      const newExpiry = new Date(base.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+      // Fire-and-forget async update
+      (async () => {
+        try {
+          await updateDoc(doc(db, "customers", profile.tokenId), {
+            expiresAt: Timestamp.fromDate(newExpiry),
+            status: "active",
+          });
+          await refreshProfile();
+          setPaymentStatus("success");
+          window.history.replaceState(null, "", "/dashboard/");
+        } catch (err) {
+          console.error("Failed to extend subscription:", err);
+          setPaymentStatus("failed");
+        }
+      })();
+    } else if (status === "failed") {
+      setPaymentStatus("failed");
+      window.history.replaceState(null, "", "/dashboard/");
+    }
+  }, [user, profile, refreshProfile]);
 
   useEffect(() => {
     try {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth, ACCOUNTS_FULL_ERROR } from "@/lib/auth-context";
@@ -12,7 +12,7 @@ import { Mail, Lock, Eye, EyeOff, Loader2, Chrome, AlertCircle, CheckCircle, Use
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signup, loginWithGoogle } = useAuth();
+  const { user, loading: authLoading, signup, loginWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,6 +23,13 @@ export default function SignupPage() {
   const [accountsFull, setAccountsFull] = useState(false);
   const [tempmailBlocked, setTempmailBlocked] = useState(false);
   const [multiAccountWarning, setMultiAccountWarning] = useState<string | null>(null);
+
+  // If already logged in, redirect to dashboard
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

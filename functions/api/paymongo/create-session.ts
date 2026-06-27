@@ -1,7 +1,7 @@
 const PLANS: Record<string, { days: number; price: number; description: string }> = {
-  "30": { days: 30, price: 4900, description: "Nuvio 30-day subscription" },
-  "60": { days: 60, price: 8900, description: "Nuvio 60-day subscription" },
-  "90": { days: 90, price: 12900, description: "Nuvio 90-day subscription" },
+  "30": { days: 30, price: 4900, description: "Nuvio 1-month subscription" },
+  "7": { days: 7, price: 2900, description: "Nuvio 1-week subscription" },
+  "3": { days: 3, price: 1900, description: "Nuvio 3-day subscription" },
 };
 
 interface Env {

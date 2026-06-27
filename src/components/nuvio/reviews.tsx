@@ -12,7 +12,7 @@ export function Reviews() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="text-center max-w-2xl mx-auto">
           <p className="text-sm font-semibold uppercase tracking-wider text-pink-400">
-            Loved by Filipinos
+            Loved by users
           </p>
           <h2 className="mt-1 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
             2,400+ happy streamers

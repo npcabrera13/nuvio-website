@@ -69,16 +69,6 @@ export function Faq() {
             );
           })}
         </div>
-
-        {/* Still have questions */}
-        <div className="mt-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            Still have questions?{" "}
-            <a href="#support" className="font-semibold text-violet-400 hover:text-violet-300 underline-offset-4 hover:underline">
-              Chat with our support team →
-            </a>
-          </p>
-        </div>
       </div>
     </section>
   );

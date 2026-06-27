@@ -72,7 +72,7 @@ export function ChannelsGrid() {
             All Channels. One Price.
           </h2>
           <p className="mt-3 text-muted-foreground">
-            From Philippine free-to-air favorites to global news, kids, anime, and sports — every channel is included from day one.
+            From free-to-air favorites to global news, kids, anime, and sports — every channel is included from day one.
           </p>
         </div>
 
