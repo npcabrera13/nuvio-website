@@ -88,7 +88,12 @@ const assignTokenToUser = async (
   userEmail: string | null,
   initialStatus: "pending" | "active"
 ): Promise<string> => {
-  // 1. Find an available token (1 read)
+  // 1. Find an available token — status must be "available" AND name must be empty.
+  //    This ensures:
+  //    - Blocked/disabled/expired tokens (status != "available") are skipped
+  //    - Tokens already assigned to someone (name != "") are never reassigned
+  //    - Even if an admin forgot to change the status, the empty-name check
+  //      prevents double-assignment
   const q = query(
     collection(db, "customers"),
     where("status", "==", "available"),
@@ -104,10 +109,20 @@ const assignTokenToUser = async (
   const tokenData = tokenDoc.data();
   const tokenId = tokenDoc.id;
 
+  // Safety check: if this token somehow already has a user assigned, skip it.
+  // This prevents double-assignment if the admin manually set status back to
+  // "available" but forgot to clear the name field.
+  if (tokenData.name && tokenData.name.trim() !== "") {
+    throw new Error(ACCOUNTS_FULL_ERROR);
+  }
+
   const now = new Date();
   const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7-day trial
 
-  // 2. Update the token doc with the user's info (1 write)
+  // 2. Update the token doc with the user's info (1 write).
+  //    The 7-day expiry OVERWRITES whatever the admin set — this is correct
+  //    because the free trial is always 7 days, regardless of what the admin
+  //    entered as a placeholder.
   await updateDoc(doc(db, "customers", tokenId), {
     name: userEmail ?? "",
     status: initialStatus,
