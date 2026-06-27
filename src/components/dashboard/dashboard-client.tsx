@@ -84,13 +84,13 @@ function CircularTimer({ expiresAt, size = 120 }: { expiresAt: Timestamp | null;
 // ═══════════════════════════════════════════════════════════════
 
 const PLANS = [
-  { id: "30", days: 30, price: 49, label: "1 month", color: "from-violet-500 to-pink-500", popular: true },
   { id: "7", days: 7, price: 29, label: "1 week", color: "from-blue-500 to-cyan-500", popular: false },
+  { id: "30", days: 30, price: 49, label: "1 month", color: "from-violet-500 to-pink-500", popular: true },
   { id: "3", days: 3, price: 19, label: "3 days", color: "from-emerald-500 to-teal-500", popular: false },
 ];
 
 function RenewalHero({ isExpired }: { isExpired: boolean }) {
-  const [selected, setSelected] = useState(0);
+  const [selected, setSelected] = useState(1); // default to 1 month (middle, most popular)
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState("");
   const plan = PLANS[selected];
@@ -369,7 +369,7 @@ function CopyField({ label, value, icon: Icon }: { label: string; value: string;
 
 export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; series: NuvioMovie[] }) {
   const router = useRouter();
-  const { user, profile, loading, signOut, refreshProfile } = useAuth();
+  const { user, profile, loading, signOut, refreshProfile, assignTokenAfterPayment } = useAuth();
   const redirected = useRef(false);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [copiedBoth, setCopiedBoth] = useState(false);
@@ -381,35 +381,54 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
     const params = new URLSearchParams(window.location.search);
     const status = params.get("payment");
     const plan = params.get("plan");
-    if (!status || !user || !profile?.tokenId) return;
+    if (!status || !user) return;
+    // For "verified-no-trial" users, profile is null — that's OK, we handle it below
+    // For existing users, we need profile.tokenId
 
     if (status === "success" && plan) {
       setPaymentStatus("processing");
       const daysToAdd = parseInt(plan, 10);
       const now = new Date();
-      const currentExpiry = profile.expiresAt ? profile.expiresAt.toDate() : now;
-      const base = currentExpiry.getTime() > now.getTime() ? currentExpiry : now;
-      const newExpiry = new Date(base.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
-      // Fire-and-forget async update
-      (async () => {
-        try {
-          await updateDoc(doc(db, "customers", profile.tokenId), {
-            expiresAt: Timestamp.fromDate(newExpiry),
-            status: "active",
-          });
-          await refreshProfile();
-          setPaymentStatus("success");
-          window.history.replaceState(null, "", "/dashboard/");
-        } catch (err) {
-          console.error("Failed to extend subscription:", err);
-          setPaymentStatus("failed");
-        }
-      })();
+
+      // Case 1: User is "verified-no-trial" — no token yet. Assign one
+      // with the plan days as the expiry.
+      if (user.displayName === "verified-no-trial") {
+        (async () => {
+          try {
+            await assignTokenAfterPayment(daysToAdd);
+            setPaymentStatus("success");
+            window.history.replaceState(null, "", "/dashboard/");
+          } catch (err) {
+            console.error("Failed to assign token after payment:", err);
+            setPaymentStatus("failed");
+          }
+        })();
+      }
+      // Case 2: User already has a token — extend the expiry.
+      else if (profile?.tokenId) {
+        const currentExpiry = profile.expiresAt ? profile.expiresAt.toDate() : now;
+        const base = currentExpiry.getTime() > now.getTime() ? currentExpiry : now;
+        const newExpiry = new Date(base.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+        (async () => {
+          try {
+            await updateDoc(doc(db, "customers", profile.tokenId), {
+              expiresAt: Timestamp.fromDate(newExpiry),
+              status: "active",
+            });
+            await refreshProfile();
+            setPaymentStatus("success");
+            window.history.replaceState(null, "", "/dashboard/");
+          } catch (err) {
+            console.error("Failed to extend subscription:", err);
+            setPaymentStatus("failed");
+          }
+        })();
+      }
     } else if (status === "failed") {
       setPaymentStatus("failed");
       window.history.replaceState(null, "", "/dashboard/");
     }
-  }, [user, profile, refreshProfile]);
+  }, [user, profile, refreshProfile, assignTokenAfterPayment]);
 
   useEffect(() => {
     try {
@@ -482,6 +501,36 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
             Resend email
           </button>
           <button onClick={signOut} className="mt-3 block w-full text-center text-xs text-muted-foreground hover:text-foreground">Log out</button>
+        </div>
+      </main>
+    );
+  }
+
+  // User verified their email but already used their free trial.
+  // Show them the plans so they can pay to get access.
+  if (user.displayName === "verified-no-trial") {
+    return (
+      <main className="min-h-screen pt-20 pb-12 px-3 sm:px-4 lg:px-6 relative">
+        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -left-40 h-[30rem] w-[30rem] rounded-full bg-violet-600/12 blur-[140px] animate-float" />
+          <div className="absolute top-1/3 -right-40 h-[26rem] w-[26rem] rounded-full bg-pink-500/10 blur-[140px] animate-float-slow" />
+        </div>
+        <div className="mx-auto max-w-2xl">
+          <div className="text-center mb-5">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-500/15 mb-4">
+              <CheckCircle2 className="h-7 w-7 text-green-400" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold mb-2">Email verified!</h1>
+            <p className="text-sm text-muted-foreground">
+              You&apos;ve already used your 7-day free trial. Choose a plan below to start streaming.
+            </p>
+          </div>
+          <RenewalHero isExpired={true} />
+          <div className="text-center mt-5">
+            <button onClick={signOut} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition">
+              <LogOut className="h-3 w-3" /> Log out
+            </button>
+          </div>
         </div>
       </main>
     );

@@ -22,7 +22,7 @@ export function Faq() {
           </p>
         </div>
 
-        <div className="mt-9 flex flex-col gap-3">
+        <div className="mt-9 flex flex-col gap-3 max-h-[60vh] lg:max-h-none overflow-y-auto lg:overflow-visible pr-1 lg:pr-0 nuvio-scrollbar">
           {FAQS.map((item, i) => {
             const isOpen = open === i;
             return (

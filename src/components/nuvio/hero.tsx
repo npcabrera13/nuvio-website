@@ -33,7 +33,7 @@ export function Hero({ movies, onOpenMovie }: HeroProps) {
             <div
               key={m.id}
               className="absolute inset-0 transition-opacity duration-[1200ms] ease-in-out"
-              style={{ opacity: i === active ? 0.35 : 0 }}
+              style={{ opacity: i === active ? 0.45 : 0 }}
             >
               <img
                 src={m.background}

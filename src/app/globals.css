@@ -290,6 +290,21 @@
   border-bottom: 1px solid rgba(20, 20, 28, 0.08);
 }
 
+/* Custom scrollbar for scrollable areas (FAQ, etc.) */
+.nuvio-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.nuvio-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.nuvio-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.3);
+  border-radius: 3px;
+}
+.nuvio-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.5);
+}
+
 /* Premium card surface (theme-aware) */
 .nuvio-card {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.01) 100%);

@@ -56,7 +56,9 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
   /** Assigns a Nuvio account to the current user. Called after email verification. */
-  completeVerification: () => Promise<void>;
+  completeVerification: (skipTrial?: boolean) => Promise<void>;
+  /** Assigns a token after payment (for users who didn't get a free trial). */
+  assignTokenAfterPayment: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -90,7 +92,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 const assignTokenToUser = async (
   firebaseUser: User,
-  userEmail: string | null
+  userEmail: string | null,
+  trialDays: number = 7
 ): Promise<string> => {
   // 1. Find an available token.
   //    The admin panel creates tokens with status: "active" and assignedTo: null.
@@ -129,7 +132,7 @@ const assignTokenToUser = async (
   const tokenId = tokenDoc.id;
 
   const now = new Date();
-  const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7-day trial
+  const expires = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000);
 
   // 2. Update the token doc with the user's info (1 write).
   //    Set assignedTo to the user's EMAIL (not UID) so the admin panel
@@ -236,11 +239,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /**
    * Called from the /verify page AFTER the email link is clicked.
-   * This is where the Nuvio account actually gets assigned.
+   * If skipTrial is true (user already used their free trial), don't assign
+   * a token — set displayName to "verified-no-trial" so the dashboard knows
+   * to show the "pay to get access" screen instead of "verify your email".
    */
-  const completeVerification = useCallback(async () => {
+  const completeVerification = useCallback(async (skipTrial: boolean = false) => {
     if (!user) throw new Error("Must be logged in to complete verification");
-    await assignTokenToUser(user, user.email);
+    if (!skipTrial) {
+      await assignTokenToUser(user, user.email);
+    } else {
+      // Mark as verified but no trial — dashboard shows "pay to get access"
+      await updateProfile(user, { displayName: "verified-no-trial" });
+    }
+    await fetchProfile(user);
+  }, [user, fetchProfile]);
+
+  /**
+   * Assign a token to the current user after payment.
+   * Called from the dashboard when payment succeeds and the user has no token.
+   * @param days - number of days to set as the expiry (from the plan they bought)
+   */
+  const assignTokenAfterPayment = useCallback(async (days: number = 30) => {
+    if (!user) throw new Error("Must be logged in");
+    await assignTokenToUser(user, user.email, days);
     await fetchProfile(user);
   }, [user, fetchProfile]);
 
@@ -269,7 +290,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, loading, signup, login, loginWithGoogle, signOut, refreshProfile, completeVerification }}
+      value={{ user, profile, loading, signup, login, loginWithGoogle, signOut, refreshProfile, completeVerification, assignTokenAfterPayment }}
     >
       {children}
     </AuthContext.Provider>

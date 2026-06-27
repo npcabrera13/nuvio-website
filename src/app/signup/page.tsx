@@ -40,9 +40,7 @@ export default function SignupPage() {
       return;
     }
 
-    // Block 1: tempmail domains — check against 100k+ domain list (server-side)
-    // This happens BEFORE Firebase Auth user creation, so fake emails never
-    // enter the Auth database.
+    // Block 1: tempmail domains — check against whitelist (server-side)
     setLoading(true);
     try {
       const validateRes = await fetch("/api/validate-email", {
@@ -60,26 +58,16 @@ export default function SignupPage() {
       // If the validation service is down, proceed (don't block legit users)
     }
 
-    // Block 2: multi-account check (client-side, localStorage)
-    const prevEmail = getPreviousSignupEmail();
-    if (prevEmail && prevEmail !== email.toLowerCase()) {
-      setLoading(false);
-      setMultiAccountWarning(prevEmail);
-      return;
-    }
+    // NOTE: We no longer block multi-account signups entirely.
+    // Instead, repeat signups are allowed but will NOT get a 7-day free trial.
+    // The /verify page checks localStorage and skips the trial if they've
+    // signed up before with a different email. They can still pay to get access.
+    recordSignup(email);
 
     try {
       const result = await signup(email, password);
-      // Record this signup in localStorage (anti-abuse)
-      recordSignup(email);
       // Always go straight to the dashboard — no "Check your inbox" screen.
-      // The dashboard will show the "Verify your email" gate for unverified users.
-      // This eliminates the double-login feeling.
-      if (result.needsVerification) {
-        router.push("/dashboard");
-      } else {
-        router.push("/dashboard");
-      }
+      router.push("/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg === ACCOUNTS_FULL_ERROR) {

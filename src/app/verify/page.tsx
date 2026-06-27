@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth, ACCOUNTS_FULL_ERROR } from "@/lib/auth-context";
+import { getPreviousSignupEmail } from "@/lib/abuse-prevention";
 import { Loader2, CheckCircle, XCircle, Sparkles, Users } from "lucide-react";
 
 function VerifyContent() {
@@ -11,7 +12,7 @@ function VerifyContent() {
   const params = useSearchParams();
   const token = params.get("token");
   const { user, loading: authLoading, completeVerification, refreshProfile } = useAuth();
-  const [status, setStatus] = useState<"loading" | "success" | "error" | "accounts-full" | "need-login">("loading");
+  const [status, setStatus] = useState<"loading" | "success" | "success-no-trial" | "error" | "accounts-full" | "need-login">("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
@@ -49,15 +50,27 @@ function VerifyContent() {
           return;
         }
 
-        // Step 3: Assign the Nuvio account (1 read + 1 write)
+        // Step 3: Check if this user already used their free trial.
+        // If they did, verify the email but DON'T assign a token — they must pay.
+        const prevEmail = getPreviousSignupEmail();
+        const skipTrial = !!prevEmail && prevEmail !== user.email?.toLowerCase();
+
         try {
-          await completeVerification();
+          await completeVerification(skipTrial);
         } catch (err) {
           if (err instanceof Error && err.message === ACCOUNTS_FULL_ERROR) {
             setStatus("accounts-full");
             return;
           }
           throw err;
+        }
+
+        if (skipTrial) {
+          // Email verified but no trial — redirect to dashboard where they
+          // can pay to get access
+          setStatus("success-no-trial");
+          setTimeout(() => router.push("/dashboard"), 3000);
+          return;
         }
 
         setStatus("success");
@@ -109,6 +122,25 @@ function VerifyContent() {
               <p className="text-sm text-muted-foreground mb-4">
                 <Sparkles className="inline h-4 w-4 text-pink-400 mr-1" />
                 Your 7-day free trial is now active. Redirecting to your dashboard…
+              </p>
+              <p className="text-xs text-muted-foreground/70">
+                Not redirecting?{" "}
+                <Link href="/dashboard" className="text-violet-400 hover:text-violet-300 font-semibold">
+                  Go to dashboard →
+                </Link>
+              </p>
+            </>
+          )}
+
+          {status === "success-no-trial" && (
+            <>
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/15 mb-5">
+                <CheckCircle className="h-8 w-8 text-green-400" />
+              </div>
+              <h1 className="text-2xl font-bold mb-2">Email verified!</h1>
+              <p className="text-sm text-muted-foreground mb-4">
+                Your email is confirmed. Since you&apos;ve already used a free trial before,
+                you can choose a plan to start streaming. Redirecting to your dashboard…
               </p>
               <p className="text-xs text-muted-foreground/70">
                 Not redirecting?{" "}

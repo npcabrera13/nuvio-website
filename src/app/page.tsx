@@ -12,7 +12,6 @@ import { ScrollUtilities } from "@/components/nuvio/scroll-utilities";
 import { MobileStickyCta } from "@/components/nuvio/mobile-sticky-cta";
 import { KeyboardHelp } from "@/components/nuvio/keyboard-help";
 import { Reveal } from "@/components/nuvio/reveal";
-import { AutoLoginRedirect } from "@/components/nuvio/auto-login-redirect";
 import type { NuvioMovie } from "@/lib/nuvio";
 import { Loader2 } from "lucide-react";
 
@@ -63,7 +62,6 @@ export default function Home() {
 
   return (
     <>
-      <AutoLoginRedirect />
       <ScrollUtilities />
       <main className="flex-1">
         <NuvioMovieSections
