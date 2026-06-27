@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
 /**
- * If the user is already logged in AND email-verified (or admin),
+ * If the user is already logged in AND has an assigned token,
  * bounce them straight to /dashboard so they don't see the landing page again.
- * Runs once on mount; safe on Cloudflare static export because it's pure client-side.
+ *
+ * Firebase Auth persists sessions via localStorage/IndexedDB by default,
+ * so this works across page reloads and when returning to the site later.
  */
 export function AutoLoginRedirect() {
   const router = useRouter();
@@ -17,7 +19,7 @@ export function AutoLoginRedirect() {
     if (loading) return;
     // Only redirect if we actually have a Firebase user AND a profile with a token.
     // Visitors who are not logged in see the landing page normally.
-    if (user && profile?.stremioToken) {
+    if (user && profile?.tokenId && profile.status !== "pending") {
       router.replace("/dashboard");
     }
   }, [user, profile, loading, router]);
