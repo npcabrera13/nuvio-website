@@ -56,13 +56,69 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     const baseUrl = `${protocol}://${host}`;
     const verifyUrl = `${baseUrl}/verify?token=${token}`;
 
-    const emailHtml = `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0a0a0f;padding:40px 24px;border-radius:16px;">
-      <h1 style="color:#f5f5f7;text-align:center;"><span style="background:linear-gradient(100deg,#a78bfa,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Nuvio</span></h1>
-      <h2 style="color:#f5f5f7;">Welcome! 👋</h2>
-      <p style="color:#9b9bab;">Verify your email to unlock your 7-day free trial.</p>
-      <a href="${verifyUrl}" style="display:inline-block;background:linear-gradient(100deg,#7c3aed,#ec4899);color:#fff;font-weight:700;padding:16px 40px;border-radius:12px;text-decoration:none;">Verify My Email →</a>
-      <p style="color:#6b6b7b;font-size:12px;">© ${new Date().getFullYear()} Nuvio. Made in the Philippines.</p>
-    </div>`;
+    const emailHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Verify your Nuvio account</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #1a1a1a; margin: 0; padding: 0; background: #f4f4f5; }
+    .container { max-width: 560px; margin: 0 auto; background: #ffffff; }
+    .header { background: linear-gradient(135deg, #7c3aed, #ec4899); color: #fff; padding: 28px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; letter-spacing: 0.5px; }
+    .content { padding: 32px 28px; }
+    .content p { margin: 0 0 16px; }
+    .btn { display: inline-block; background: #7c3aed; color: #fff; font-weight: 700; padding: 14px 36px; border-radius: 10px; text-decoration: none; margin: 8px 0 20px; }
+    .info-box { background: #f8f9fa; border-left: 4px solid #7c3aed; padding: 16px 20px; margin: 20px 0; }
+    .info-box p { margin: 6px 0; font-size: 14px; }
+    .footer { background: #f4f4f5; color: #6b7280; padding: 20px; text-align: center; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1>Nuvio</h1></div>
+    <div class="content">
+      <p>Hi there,</p>
+      <p>Welcome to Nuvio! You are one step away from unlocking your <strong>7-day free trial</strong> of the Philippines' all-in-one streaming bundle — movies, series, anime, and live TV channels.</p>
+      <p>Please confirm your email address to activate your account:</p>
+      <a href="${verifyUrl}" class="btn">Verify My Email</a>
+      <div class="info-box">
+        <p><strong>What happens next?</strong></p>
+        <p>Once verified, you will get instant access to a Nuvio.tv account with 7 days of free streaming. No credit card required.</p>
+        <p><strong>Link expires in 24 hours.</strong> If you did not sign up for Nuvio, you can safely ignore this email.</p>
+      </div>
+      <p>Need help? Reply to this email and our team will assist you.</p>
+      <p>Best regards,<br><strong>The Nuvio Team</strong></p>
+    </div>
+    <div class="footer">
+      <p>&copy; ${new Date().getFullYear()} Nuvio. Made in the Philippines.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    // Plain-text alternative — helps with spam filters (multipart emails)
+    const emailText = `Nuvio — Verify your email
+
+Hi there,
+
+Welcome to Nuvio! You are one step away from unlocking your 7-day free trial of the Philippines' all-in-one streaming bundle — movies, series, anime, and live TV channels.
+
+Please confirm your email address by clicking the link below:
+${verifyUrl}
+
+What happens next?
+Once verified, you will get instant access to a Nuvio.tv account with 7 days of free streaming. No credit card required.
+
+Link expires in 24 hours. If you did not sign up for Nuvio, you can safely ignore this email.
+
+Need help? Reply to this email and our team will assist you.
+
+Best regards,
+The Nuvio Team
+
+© ${new Date().getFullYear()} Nuvio. Made in the Philippines.`;
 
     // Send the email via the send-email Function (worker-mailer + Gmail SMTP)
     await fetch(`${baseUrl}/api/send-email`, {
@@ -70,8 +126,9 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         to: email,
-        subject: "Verify your Nuvio account ✓",
+        subject: "Verify your Nuvio account",  // no ✓ — unicode triggers spam filters
         html: emailHtml,
+        text: emailText,  // plain-text alternative (multipart)
       }),
     });
 

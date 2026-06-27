@@ -65,8 +65,11 @@ export default function SignupPage() {
       const result = await signup(email, password);
       // Record this signup in localStorage (anti-abuse)
       recordSignup(email);
+      // Always go straight to the dashboard — no "Check your inbox" screen.
+      // The dashboard will show the "Verify your email" gate for unverified users.
+      // This eliminates the double-login feeling.
       if (result.needsVerification) {
-        setSuccess(true);
+        router.push("/dashboard");
       } else {
         router.push("/dashboard");
       }
@@ -92,12 +95,8 @@ export default function SignupPage() {
     setError("");
     setGoogleLoading(true);
     try {
-      const result = await loginWithGoogle();
-      if (result.needsVerification) {
-        setSuccess(true);
-      } else {
-        router.push("/dashboard");
-      }
+      await loginWithGoogle();
+      router.push("/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg === ACCOUNTS_FULL_ERROR) {

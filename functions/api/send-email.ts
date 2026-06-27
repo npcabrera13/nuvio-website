@@ -13,11 +13,12 @@ interface EmailRequest {
   to: string;
   subject: string;
   html: string;
+  text?: string;  // plain-text alternative (helps with spam filters)
 }
 
 export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
   try {
-    const { to, subject, html } = await request.json() as EmailRequest;
+    const { to, subject, html, text } = await request.json() as EmailRequest;
 
     if (!to || !subject || !html) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), {
@@ -52,6 +53,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
       to: { email: to },
       subject: subject,
       html: html,
+      text: text,  // plain-text alternative — multipart email
     });
 
     return new Response(JSON.stringify({ success: true }), {
