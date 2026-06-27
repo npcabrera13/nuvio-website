@@ -1,14 +1,51 @@
-export const onRequestPost = async ({ request }: { request: Request }) => {
+// Cloudflare Pages Function — generates a signed verification token (HMAC)
+// NO Firestore reads or writes. The token is a JWT-like string that contains
+// the tokenId + expiry, signed with VERIFICATION_SECRET env var.
+
+interface Env {
+  VERIFICATION_SECRET: string;
+}
+
+/** Sign a payload with HMAC-SHA256 using Web Crypto API (works in Workers) */
+async function sign(payload: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
+  return btoa(String.fromCharCode(...new Uint8Array(signature)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
   try {
-    const { email, uid } = await request.json();
-    if (!email || !uid) {
-      return new Response(JSON.stringify({ error: "Email and uid required" }), { status: 400, headers: { "Content-Type": "application/json" } });
+    const { email, uid, tokenId } = await request.json();
+    if (!email || !uid || !tokenId) {
+      return new Response(
+        JSON.stringify({ error: "email, uid, and tokenId required" }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
 
-    const token = Array.from({ length: 32 })
-      .map(() => "abcdefghijklmnopqrstuvwxyz0123456789"[Math.floor(Math.random() * 36)])
-      .join("");
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    // Default secret for dev; set VERIFICATION_SECRET in Cloudflare for prod
+    const secret = env.VERIFICATION_SECRET || "nuvio-verification-secret-2026";
+
+    // Build the signed token: base64(payload).signature
+    const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    const payload = JSON.stringify({ uid, email, tokenId, exp: expiresAt });
+    const payloadB64 = btoa(payload)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+    const signature = await sign(payloadB64, secret);
+    const token = `${payloadB64}.${signature}`;
+
     const baseUrl = new URL(request.url).origin;
     const verifyUrl = `${baseUrl}/verify?token=${token}`;
 
@@ -20,16 +57,25 @@ export const onRequestPost = async ({ request }: { request: Request }) => {
       <p style="color:#6b6b7b;font-size:12px;">© ${new Date().getFullYear()} Nuvio. Made in the Philippines.</p>
     </div>`;
 
-    // Call send-email function
-    const res = await fetch(`${baseUrl}/api/send-email`, {
+    // Send the email via the send-email Function (worker-mailer + Gmail SMTP)
+    await fetch(`${baseUrl}/api/send-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to: email, subject: "Verify your Nuvio account ✓", html: emailHtml }),
+      body: JSON.stringify({
+        to: email,
+        subject: "Verify your Nuvio account ✓",
+        html: emailHtml,
+      }),
     });
 
-    const emailSent = res.ok;
-    return new Response(JSON.stringify({ success: true, token, expiresAt: expiresAt.toISOString(), emailSent }), { headers: { "Content-Type": "application/json" } });
+    return new Response(
+      JSON.stringify({ success: true, expiresAt: new Date(expiresAt).toISOString() }),
+      { headers: { "Content-Type": "application/json" } }
+    );
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Failed" }), { status: 500, headers: { "Content-Type": "application/json" } });
+    return new Response(
+      JSON.stringify({ error: "Failed to send verification email" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
   }
 };

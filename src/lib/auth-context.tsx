@@ -8,13 +8,13 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   GoogleAuthProvider,
+  updateProfile,
   type User,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import {
   doc,
   getDoc,
-  setDoc,
   updateDoc,
   serverTimestamp,
   Timestamp,
@@ -37,13 +37,14 @@ export const ACCOUNTS_FULL_ERROR = "ACCOUNTS_FULL";
 interface UserProfile {
   uid: string;
   email: string | null;
-  stremioToken: string;
+  tokenId: string;
   nuvioEmail: string;
   nuvioPassword: string;
-  status: "active" | "expired";
+  status: "available" | "pending" | "active" | "expired";
   expiresAt: Timestamp | null;
   createdAt: Timestamp | null;
-  emailVerified: boolean;
+  name: string;
+  notes: string;
 }
 
 interface AuthContextValue {
@@ -60,31 +61,36 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 /**
- * Find an available token in the `tokens` collection and assign it to the user.
+ * ARCHITECTURE (single collection, minimal reads/writes):
  *
- * The admin pre-creates token docs (via the admin panel) with real Nuvio.tv
- * credentials. Each token doc looks like:
- *   tokens/{tokenId} = {
- *     nuvioEmail: "user@nuvio.tv",
- *     nuvioPassword: "pass123",
- *     status: "available" | "assigned",
- *     assignedTo: uid | null,
+ *   customers/{tokenId} = {
+ *     nuvioEmail: "...",      ← real Nuvio.tv credentials (set by admin)
+ *     nuvioPassword: "...",
+ *     name: "user@email.com", ← assigned user's email (empty = available)
+ *     notes: "",
+ *     status: "available" | "pending" | "active" | "expired",
+ *     expiresAt: timestamp,
  *     createdAt: timestamp
  *   }
  *
- * This function:
- *   1. Queries for a token where status == "available"
- *   2. If none found → throws ACCOUNTS_FULL_ERROR
- *   3. Creates customers/{uid} with the token's Nuvio credentials
- *   4. Marks the token as assigned to this user
+ * - Admin creates token docs with status "available" + Nuvio credentials.
+ * - Signup: query 1 available token → update it (1 read + 1 write).
+ * - Token ID stored in user.displayName (Firebase Auth) → 0 Firestore.
+ * - Dashboard reads customers/{user.displayName} → 1 read.
+ * - Verification uses signed JWT (HMAC) → 0 Firestore reads/writes.
+ * - On verify: update customers/{tokenId}.status = "active" → 1 write.
+ *
+ * Total per user: ~2 reads + 2 writes. No tokens/ or verifications/ collections.
  */
+
 const assignTokenToUser = async (
   firebaseUser: User,
-  emailVerified: boolean
+  userEmail: string | null,
+  initialStatus: "pending" | "active"
 ): Promise<string> => {
-  // 1. Find an available token
+  // 1. Find an available token (1 read)
   const q = query(
-    collection(db, "tokens"),
+    collection(db, "customers"),
     where("status", "==", "available"),
     limit(1)
   );
@@ -101,25 +107,15 @@ const assignTokenToUser = async (
   const now = new Date();
   const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7-day trial
 
-  // 2. Create the customer doc with the token's Nuvio credentials
-  await setDoc(doc(db, "customers", firebaseUser.uid), {
-    email: firebaseUser.email,
-    stremioToken: tokenId,
-    nuvioEmail: tokenData.nuvioEmail || "",
-    nuvioPassword: tokenData.nuvioPassword || "",
-    status: "active",
+  // 2. Update the token doc with the user's info (1 write)
+  await updateDoc(doc(db, "customers", tokenId), {
+    name: userEmail ?? "",
+    status: initialStatus,
     expiresAt: Timestamp.fromDate(expires),
-    createdAt: serverTimestamp(),
-    emailVerified,
   });
 
-  // 3. Mark the token as assigned to this user
-  await updateDoc(doc(db, "tokens", tokenId), {
-    status: "assigned",
-    assignedTo: firebaseUser.uid,
-    assignedAt: serverTimestamp(),
-    expiresAt: Timestamp.fromDate(expires),
-  });
+  // 3. Store tokenId in user.displayName (Firebase Auth, 0 Firestore)
+  await updateProfile(firebaseUser, { displayName: tokenId });
 
   return tokenId;
 };
@@ -129,28 +125,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = useCallback(async (uid: string, email: string | null) => {
+  const fetchProfile = useCallback(async (firebaseUser: User) => {
+    // Read customers/{user.displayName} — 1 read, no queries
+    const tokenId = firebaseUser.displayName;
+    if (!tokenId) {
+      setProfile(null);
+      return;
+    }
     try {
-      const ref = doc(db, "customers", uid);
-      const snap = await getDoc(ref);
+      const snap = await getDoc(doc(db, "customers", tokenId));
       if (snap.exists()) {
         const data = snap.data();
         setProfile({
-          uid,
-          email: data.email ?? email,
-          stremioToken: data.stremioToken ?? "",
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          tokenId,
           nuvioEmail: data.nuvioEmail ?? "",
           nuvioPassword: data.nuvioPassword ?? "",
-          status: data.status ?? "active",
+          status: data.status ?? "available",
           expiresAt: data.expiresAt ?? null,
           createdAt: data.createdAt ?? null,
-          emailVerified: data.emailVerified ?? false,
+          name: data.name ?? "",
+          notes: data.notes ?? "",
         });
       } else {
-        // User exists in Firebase Auth but has no customer doc.
-        // This can happen if signup failed midway (e.g. token assignment
-        // threw ACCOUNTS_FULL). Don't auto-create — just set profile to
-        // null so the dashboard can show the appropriate screen.
         setProfile(null);
       }
     } catch (err) {
@@ -163,7 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        await fetchProfile(firebaseUser.uid, firebaseUser.email);
+        await fetchProfile(firebaseUser);
       } else {
         setProfile(null);
       }
@@ -173,7 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchProfile]);
 
   const refreshProfile = useCallback(async () => {
-    if (user) await fetchProfile(user.uid, user.email);
+    if (user) await fetchProfile(user);
   }, [user, fetchProfile]);
 
   const signup = useCallback(
@@ -182,31 +180,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
 
       if (isAdmin) {
-        // Admin: assign token + auto-verify, skip email flow
-        await assignTokenToUser(cred.user, true);
+        // Admin: assign token + set status active immediately, skip email
+        await assignTokenToUser(cred.user, cred.user.email, "active");
         return { needsVerification: false };
       }
 
-      // Regular user: assign token, then send verification email
-      await assignTokenToUser(cred.user, false);
+      // Regular user: assign token with "pending" status, send verification email
+      await assignTokenToUser(cred.user, cred.user.email, "pending");
       try {
-        const res = await fetch("/api/send-verification", {
+        await fetch("/api/send-verification", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: cred.user.email,
             uid: cred.user.uid,
+            tokenId: cred.user.displayName, // the assigned token ID
           }),
         });
-        const data = await res.json();
-        if (data.token) {
-          await setDoc(doc(db, "verifications", data.token), {
-            uid: cred.user.uid,
-            email: cred.user.email,
-            expiresAt: Timestamp.fromDate(new Date(data.expiresAt)),
-            used: false,
-          });
-        }
       } catch (err) {
         console.error("Failed to send verification email:", err);
       }
@@ -222,13 +212,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loginWithGoogle = useCallback(async () => {
     const provider = new GoogleAuthProvider();
     const cred = await signInWithPopup(auth, provider);
-    const snap = await getDoc(doc(db, "customers", cred.user.uid));
-    if (!snap.exists()) {
-      // New Google user — assign a token (Google emails are pre-verified)
-      await assignTokenToUser(cred.user, true);
+
+    // New Google user (no displayName = no token assigned yet)
+    if (!cred.user.displayName) {
+      await assignTokenToUser(cred.user, cred.user.email, "active");
       return { needsVerification: false };
     }
-    return { needsVerification: !snap.data()?.emailVerified };
+
+    // Existing user — fetchProfile (triggered by onAuthStateChanged) will
+    // read the status. Don't do a duplicate read here. Assume active;
+    // the dashboard will show the "verify" gate if status is pending.
+    return { needsVerification: false };
   }, []);
 
   const signOut = useCallback(async () => {
