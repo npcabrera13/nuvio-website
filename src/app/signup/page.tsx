@@ -4,7 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth, ACCOUNTS_FULL_ERROR } from "@/lib/auth-context";
-import { Mail, Lock, Eye, EyeOff, Loader2, Chrome, AlertCircle, CheckCircle, Users } from "lucide-react";
+import {
+  isTempmail,
+  getPreviousSignupEmail,
+  recordSignup,
+} from "@/lib/abuse-prevention";
+import { Mail, Lock, Eye, EyeOff, Loader2, Chrome, AlertCircle, CheckCircle, Users, ShieldAlert } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -17,6 +22,8 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [accountsFull, setAccountsFull] = useState(false);
+  const [tempmailBlocked, setTempmailBlocked] = useState(false);
+  const [multiAccountWarning, setMultiAccountWarning] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,9 +34,25 @@ export default function SignupPage() {
       return;
     }
 
+    // Block 1: tempmail domains
+    if (isTempmail(email)) {
+      setTempmailBlocked(true);
+      return;
+    }
+
+    // Block 2: multi-account check (client-side, localStorage)
+    const prevEmail = getPreviousSignupEmail();
+    if (prevEmail && prevEmail !== email.toLowerCase()) {
+      // They already signed up with a DIFFERENT email from this browser
+      setMultiAccountWarning(prevEmail);
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await signup(email, password);
+      // Record this signup in localStorage (anti-abuse)
+      recordSignup(email);
       if (result.needsVerification) {
         setSuccess(true);
       } else {
@@ -74,6 +97,63 @@ export default function SignupPage() {
       setGoogleLoading(false);
     }
   };
+
+  if (tempmailBlocked) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4 py-20">
+        <div className="w-full max-w-md nuvio-card rounded-3xl p-8 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/15 mb-5">
+            <ShieldAlert className="h-8 w-8 text-red-400" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Disposable email blocked</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            We don&apos;t accept temporary or disposable email addresses. Please use a real
+            email from Gmail, Outlook, Yahoo, etc. This helps us prevent abuse and keep
+            Nuvio affordable for everyone.
+          </p>
+          <Link
+            href="/signup"
+            onClick={() => setTempmailBlocked(false)}
+            className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold hover:bg-white/10 transition"
+          >
+            Try a different email
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  if (multiAccountWarning) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4 py-20">
+        <div className="w-full max-w-md nuvio-card rounded-3xl p-8 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/15 mb-5">
+            <ShieldAlert className="h-8 w-8 text-amber-400" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">One account per person</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            We noticed you already signed up with <span className="font-semibold text-foreground">{multiAccountWarning}</span>.
+            Nuvio allows one free trial per person to keep our service affordable.
+            <br /><br />
+            Please log in to your existing account instead.
+          </p>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center rounded-xl nuvio-gradient-bg px-5 py-3 text-sm font-semibold text-white"
+          >
+            Log in to your account
+          </Link>
+          <Link
+            href="/signup"
+            onClick={() => setMultiAccountWarning(null)}
+            className="mt-3 block text-center text-xs text-muted-foreground hover:text-foreground"
+          >
+            Use a different device
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   if (accountsFull) {
     return (
