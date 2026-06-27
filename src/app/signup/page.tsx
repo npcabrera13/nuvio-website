@@ -141,25 +141,17 @@ export default function SignupPage() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/15 mb-5">
             <ShieldAlert className="h-8 w-8 text-amber-400" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">One account per person</h1>
+          <h1 className="text-2xl font-bold mb-2">Not eligible for free trial</h1>
           <p className="text-sm text-muted-foreground mb-6">
-            We noticed you already signed up with <span className="font-semibold text-foreground">{multiAccountWarning}</span>.
-            Nuvio allows one free trial per person to keep our service affordable.
+            Sorry, you are not eligible for the 7-day free trial. Each person is allowed one free trial only.
             <br /><br />
-            Please log in to your existing account instead.
+            If you believe this is an error, please contact support.
           </p>
           <Link
             href="/login"
             className="inline-flex items-center justify-center rounded-xl nuvio-gradient-bg px-5 py-3 text-sm font-semibold text-white"
           >
             Log in to your account
-          </Link>
-          <Link
-            href="/signup"
-            onClick={() => setMultiAccountWarning(null)}
-            className="mt-3 block text-center text-xs text-muted-foreground hover:text-foreground"
-          >
-            Use a different device
           </Link>
         </div>
       </main>

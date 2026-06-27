@@ -82,17 +82,11 @@ function CircularTimer({ expiresAt, size = 120 }: { expiresAt: Timestamp | null;
 // RENEWAL HERO — the conversion centerpiece, front and center
 // ═══════════════════════════════════════════════════════════════
 
-const PLANS = [
-  { days: 30, price: 49, perDay: "1.63", popular: false, color: "from-blue-500 to-cyan-500" },
-  { days: 90, price: 129, perDay: "1.43", popular: true, color: "from-violet-500 to-pink-500" },
-  { days: 60, price: 89, perDay: "1.48", popular: false, color: "from-emerald-500 to-teal-500" },
-];
+const PLAN = { days: 30, price: 49 };
 
 function RenewalHero({ isExpired }: { isExpired: boolean }) {
-  const [selected, setSelected] = useState(1); // default to BEST VALUE (90 days)
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState("");
-  const plan = PLANS[selected];
 
   return (
     <div className="relative overflow-hidden rounded-2xl mb-5">
@@ -119,30 +113,10 @@ function RenewalHero({ isExpired }: { isExpired: boolean }) {
           </div>
         </div>
 
-        {/* Plan selector — 3 vibrant buttons */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          {PLANS.map((p, i) => (
-            <button
-              key={p.days}
-              onClick={() => setSelected(i)}
-              className={`relative rounded-xl p-3 text-center transition-all duration-200 ${
-                selected === i
-                  ? `bg-gradient-to-br ${p.color} shadow-lg scale-105`
-                  : "bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08]"
-              }`}
-            >
-              {p.popular && (
-                <span className={`absolute -top-2 left-1/2 -translate-x-1/2 rounded-full px-2 py-0.5 text-[8px] font-bold ${
-                  selected === i ? "bg-white text-violet-700" : "nuvio-gradient-bg text-white"
-                }`}>
-                  BEST VALUE
-                </span>
-              )}
-              <p className={`text-[10px] font-semibold ${selected === i ? "text-white/80" : "text-muted-foreground"}`}>{p.days} days</p>
-              <p className={`text-xl font-extrabold ${selected === i ? "text-white" : "text-foreground"}`}>₱{p.price}</p>
-              <p className={`text-[9px] ${selected === i ? "text-white/70" : "text-muted-foreground"}`}>₱{p.perDay}/day</p>
-            </button>
-          ))}
+        {/* Price display — simple, one price */}
+        <div className="flex items-baseline justify-center gap-2 mb-4 py-2">
+          <span className="text-4xl font-extrabold bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">₱{PLAN.price}</span>
+          <span className="text-sm text-muted-foreground">/ month</span>
         </div>
 
         {/* CTA button — big, glowing, irresistible */}
@@ -153,11 +127,10 @@ function RenewalHero({ isExpired }: { isExpired: boolean }) {
               const res = await fetch("/api/paymongo/create-session", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ plan: String(plan.days) }),
+                body: JSON.stringify({ plan: String(PLAN.days) }),
               });
               const data = await res.json();
               if (data.checkoutUrl) {
-                // Redirect to PayMongo checkout
                 window.location.href = data.checkoutUrl;
               } else {
                 setPayError(data.error || "Failed to start payment");
@@ -180,7 +153,7 @@ function RenewalHero({ isExpired }: { isExpired: boolean }) {
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                {isExpired ? "Reactivate now" : `Continue for ₱${plan.price}`}
+                {isExpired ? "Reactivate now" : `Continue for ₱${PLAN.price}`}
                 <ArrowRight className="h-4 w-4" />
               </>
             )}
@@ -424,12 +397,24 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
           </p>
           <button
             onClick={async () => {
-              await fetch("/api/send-verification", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: user.email, uid: user.uid }),
-              });
+              const btn = document.getElementById("resend-btn");
+              if (btn) { btn.textContent = "Sending…"; btn.setAttribute("disabled", "true"); }
+              try {
+                const res = await fetch("/api/send-verification", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ email: user.email, uid: user.uid }),
+                });
+                const data = await res.json();
+                if (btn) {
+                  btn.textContent = data.success ? "Email sent! Check your inbox" : "Failed to send";
+                  setTimeout(() => { if (btn) { btn.textContent = "Resend email"; btn.removeAttribute("disabled"); } }, 3000);
+                }
+              } catch {
+                if (btn) { btn.textContent = "Failed to send"; setTimeout(() => { if (btn) { btn.textContent = "Resend email"; btn.removeAttribute("disabled"); } }, 3000); }
+              }
             }}
+            id="resend-btn"
             className="inline-flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-sm font-semibold hover:bg-white/[0.06] transition"
           >
             Resend email
@@ -515,9 +500,6 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
             <Link href="/" aria-label="Home" className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] text-muted-foreground hover:text-foreground transition">
               <Home className="h-4 w-4" />
             </Link>
-            <button onClick={signOut} aria-label="Log out" className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] text-muted-foreground hover:text-foreground transition">
-              <LogOut className="h-4 w-4" />
-            </button>
           </div>
         </div>
 
@@ -566,10 +548,6 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
           >
             {copiedBoth ? <><Check className="h-3.5 w-3.5" /> Copied both!</> : <><Copy className="h-3.5 w-3.5" /> Copy email + password</>}
           </button>
-          {/* Go to nuvio.tv */}
-          <a href="https://nuvio.tv" target="_blank" rel="noopener noreferrer" className="mt-2 w-full rounded-xl border border-white/[0.08] bg-white/[0.02] py-2.5 text-xs font-semibold text-center hover:bg-white/[0.05] transition flex items-center justify-center gap-1.5">
-            <Play className="h-3.5 w-3.5 text-violet-400" /> Open nuvio.tv
-          </a>
         </div>
 
         {/* ─── EXPIRED BANNER ─── */}
@@ -612,10 +590,13 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
         </div>
 
         {/* ─── FOOTER ─── */}
-        <div className="text-center pb-4">
+        <div className="text-center pb-4 flex items-center justify-center gap-4">
           <Link href="/" className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition">
             <ChevronRight className="h-3 w-3 rotate-180" /> Back to home
           </Link>
+          <button onClick={signOut} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition">
+            <LogOut className="h-3 w-3" /> Log out
+          </button>
         </div>
       </div>
     </main>

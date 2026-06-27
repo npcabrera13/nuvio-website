@@ -311,26 +311,12 @@ export interface PricingTier {
 export const PRICING_TIERS: PricingTier[] = [
   {
     id: "30",
-    duration: "30 Days",
+    duration: "Monthly",
     price: 49,
-    perDay: "₱1.63 per day",
-    features: ["Full movie & series library", "All live channels", "Full HD streaming", "1 device"],
-  },
-  {
-    id: "90",
-    duration: "90 Days",
-    price: 129,
-    perDay: "₱1.43 per day",
-    badge: "BEST VALUE",
+    perDay: "All-in-one streaming bundle",
+    badge: "7 DAYS FREE",
     highlight: true,
-    features: ["Everything in 30 Days", "Priority stream servers", "4K where available", "2 devices", "Early access to new content"],
-  },
-  {
-    id: "60",
-    duration: "60 Days",
-    price: 89,
-    perDay: "₱1.48 per day",
-    features: ["Full movie & series library", "All live channels", "Full HD streaming", "1 device"],
+    features: ["Full movie & series library", "All live channels", "Full HD streaming", "Cancel anytime"],
   },
 ];
 

@@ -60,63 +60,31 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Verify your Nuvio account</title>
-  <style>
-    body { font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #1a1a1a; margin: 0; padding: 0; background: #f4f4f5; }
-    .container { max-width: 560px; margin: 0 auto; background: #ffffff; }
-    .header { background: linear-gradient(135deg, #7c3aed, #ec4899); color: #fff; padding: 28px; text-align: center; }
-    .header h1 { margin: 0; font-size: 24px; letter-spacing: 0.5px; }
-    .content { padding: 32px 28px; }
-    .content p { margin: 0 0 16px; }
-    .btn { display: inline-block; background: #7c3aed; color: #fff; font-weight: 700; padding: 14px 36px; border-radius: 10px; text-decoration: none; margin: 8px 0 20px; }
-    .info-box { background: #f8f9fa; border-left: 4px solid #7c3aed; padding: 16px 20px; margin: 20px 0; }
-    .info-box p { margin: 6px 0; font-size: 14px; }
-    .footer { background: #f4f4f5; color: #6b7280; padding: 20px; text-align: center; font-size: 12px; }
-  </style>
+  <title>Welcome to Nuvio</title>
 </head>
-<body>
-  <div class="container">
-    <div class="header"><h1>Nuvio</h1></div>
-    <div class="content">
-      <p>Hi there,</p>
-      <p>Welcome to Nuvio! You are one step away from unlocking your <strong>7-day free trial</strong> of the Philippines' all-in-one streaming bundle — movies, series, anime, and live TV channels.</p>
-      <p>Please confirm your email address to activate your account:</p>
-      <a href="${verifyUrl}" class="btn">Verify My Email</a>
-      <div class="info-box">
-        <p><strong>What happens next?</strong></p>
-        <p>Once verified, you will get instant access to a Nuvio.tv account with 7 days of free streaming. No credit card required.</p>
-        <p><strong>Link expires in 24 hours.</strong> If you did not sign up for Nuvio, you can safely ignore this email.</p>
-      </div>
-      <p>Need help? Reply to this email and our team will assist you.</p>
-      <p>Best regards,<br><strong>The Nuvio Team</strong></p>
-    </div>
-    <div class="footer">
-      <p>&copy; ${new Date().getFullYear()} Nuvio. Made in the Philippines.</p>
-    </div>
-  </div>
+<body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#333;margin:0;padding:20px;background:#fff;">
+  <p style="font-size:18px;font-weight:bold;color:#7c3aed;margin:0 0 16px;">Nuvio</p>
+  <p>Hi,</p>
+  <p>Thank you for signing up for Nuvio. Please verify your email address to activate your 7-day free trial:</p>
+  <p><a href="${verifyUrl}" style="color:#7c3aed;font-weight:bold;">${verifyUrl}</a></p>
+  <p>This link will expire in 24 hours. If you did not create an account, you can safely ignore this email.</p>
+  <p>Best regards,<br>Nuvio Team</p>
+  <p style="font-size:11px;color:#999;margin-top:24px;border-top:1px solid #eee;padding-top:12px;">© ${new Date().getFullYear()} Nuvio. Made in the Philippines.</p>
 </body>
 </html>`;
 
-    // Plain-text alternative — helps with spam filters (multipart emails)
     const emailText = `Nuvio — Verify your email
 
-Hi there,
+Hi,
 
-Welcome to Nuvio! You are one step away from unlocking your 7-day free trial of the Philippines' all-in-one streaming bundle — movies, series, anime, and live TV channels.
+Thank you for signing up for Nuvio. Please verify your email address to activate your 7-day free trial:
 
-Please confirm your email address by clicking the link below:
 ${verifyUrl}
 
-What happens next?
-Once verified, you will get instant access to a Nuvio.tv account with 7 days of free streaming. No credit card required.
-
-Link expires in 24 hours. If you did not sign up for Nuvio, you can safely ignore this email.
-
-Need help? Reply to this email and our team will assist you.
+This link will expire in 24 hours. If you did not create an account, you can safely ignore this email.
 
 Best regards,
-The Nuvio Team
+Nuvio Team
 
 © ${new Date().getFullYear()} Nuvio. Made in the Philippines.`;
 
@@ -126,9 +94,9 @@ The Nuvio Team
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         to: email,
-        subject: "Verify your Nuvio account",  // no ✓ — unicode triggers spam filters
+        subject: "Welcome to Nuvio — verify your email",
         html: emailHtml,
-        text: emailText,  // plain-text alternative (multipart)
+        text: emailText,
       }),
     });
 
