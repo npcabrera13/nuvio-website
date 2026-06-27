@@ -15,9 +15,16 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
+
+/** Admin emails — bypass email verification (go straight to dashboard) */
+const ADMIN_EMAILS = [
+  "neilpaolocabrera@gmail.com",
+  "gensnapdragon5@gmail.com",
+].map((e) => e.toLowerCase());
 
 interface UserProfile {
   uid: string;
@@ -161,11 +168,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signup = useCallback(
     async (email: string, password: string) => {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
-      // All users go straight to dashboard — no email verification gate.
-      // (The custom verification flow was broken: /api/verify-email never
-      // updated Firestore, so users could never get emailVerified=true.)
-      await createCustomerDocs(cred.user, true);
-      return { needsVerification: false };
+      const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
+
+      if (isAdmin) {
+        // Admin: auto-verify, skip email flow, go straight to dashboard
+        await createCustomerDocs(cred.user, true);
+        return { needsVerification: false };
+      }
+
+      // Regular user: create docs, send verification email
+      await createCustomerDocs(cred.user, false);
+      try {
+        const res = await fetch("/api/send-verification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: cred.user.email,
+            uid: cred.user.uid,
+          }),
+        });
+        const data = await res.json();
+        if (data.token) {
+          await setDoc(doc(db, "verifications", data.token), {
+            uid: cred.user.uid,
+            email: cred.user.email,
+            expiresAt: Timestamp.fromDate(new Date(data.expiresAt)),
+            used: false,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to send verification email:", err);
+      }
+      return { needsVerification: true };
     },
     [createCustomerDocs]
   );
@@ -179,9 +213,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const cred = await signInWithPopup(auth, provider);
     const snap = await getDoc(doc(db, "customers", cred.user.uid));
     if (!snap.exists()) {
+      // Google emails are pre-verified by Google
       await createCustomerDocs(cred.user, true);
+      return { needsVerification: false };
     }
-    return { needsVerification: false };
+    return { needsVerification: !snap.data()?.emailVerified };
   }, [createCustomerDocs]);
 
   const signOut = useCallback(async () => {

@@ -4,6 +4,8 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { db } from "@/lib/firebase";
+import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { Loader2, CheckCircle, XCircle, Sparkles } from "lucide-react";
 
 function VerifyContent() {
@@ -23,23 +25,57 @@ function VerifyContent() {
 
     async function verify() {
       try {
-        const res = await fetch("/api/verify-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
+        // 1. Read the verification token doc from Firestore (public read works).
+        const tokenRef = doc(db, "verifications", token!);
+        const tokenSnap = await getDoc(tokenRef);
+
+        if (!tokenSnap.exists()) {
           setStatus("error");
-          setErrorMsg(data.error || "Verification failed.");
+          setErrorMsg("This verification link is invalid or has expired.");
           return;
         }
+
+        const tokenData = tokenSnap.data();
+        if (tokenData.used) {
+          setStatus("error");
+          setErrorMsg("This verification link has already been used.");
+          return;
+        }
+
+        // Check expiry (24 hours)
+        const expiresAt = tokenData.expiresAt;
+        if (expiresAt && expiresAt.toDate().getTime() < Date.now()) {
+          setStatus("error");
+          setErrorMsg("This verification link has expired. Please sign up again.");
+          return;
+        }
+
+        const uid = tokenData.uid;
+        if (!uid) {
+          setStatus("error");
+          setErrorMsg("Invalid verification token.");
+          return;
+        }
+
+        // 2. Mark the token as used (idempotent — safe to retry).
+        await updateDoc(tokenRef, { used: true });
+
+        // 3. Set emailVerified=true on the user's customer doc.
+        //    (Firestore rules are public, so this write works for the
+        //    authenticated user or even anonymously.)
+        const customerRef = doc(db, "customers", uid);
+        await updateDoc(customerRef, {
+          emailVerified: true,
+          verifiedAt: Timestamp.now(),
+        });
+
         setStatus("success");
-        // Refresh the user's profile so emailVerified updates
+        // 4. Refresh the user's profile so the dashboard sees emailVerified=true
         if (user) await refreshProfile();
-        // Auto-redirect to dashboard after 2.5s
+        // 5. Auto-redirect to dashboard after 2.5s
         setTimeout(() => router.push("/dashboard"), 2500);
-      } catch {
+      } catch (err) {
+        console.error("Verification error:", err);
         setStatus("error");
         setErrorMsg("Network error. Please try again.");
       }

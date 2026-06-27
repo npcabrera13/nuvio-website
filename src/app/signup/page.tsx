@@ -28,9 +28,12 @@ export default function SignupPage() {
 
     setLoading(true);
     try {
-      await signup(email, password);
-      // All users go straight to dashboard — no email verification gate.
-      router.push("/dashboard");
+      const result = await signup(email, password);
+      if (result.needsVerification) {
+        setSuccess(true);
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("email-already-in-use")) {
@@ -51,8 +54,12 @@ export default function SignupPage() {
     setError("");
     setGoogleLoading(true);
     try {
-      await loginWithGoogle();
-      router.push("/dashboard");
+      const result = await loginWithGoogle();
+      if (result.needsVerification) {
+        setSuccess(true);
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(msg || "Google sign-in failed. Please try again.");
@@ -68,10 +75,16 @@ export default function SignupPage() {
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/15 mb-5">
             <CheckCircle className="h-8 w-8 text-green-400" />
           </div>
-          <h1 className="text-2xl font-bold mb-2">Welcome to Nuvio! 🎉</h1>
+          <h1 className="text-2xl font-bold mb-2">Check your inbox</h1>
           <p className="text-sm text-muted-foreground mb-6">
-            Your 7-day free trial is now active. Redirecting to your dashboard…
+            We sent a verification link to <span className="font-semibold text-foreground">{email}</span>. Click it to unlock your 7-day free trial.
           </p>
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold hover:bg-white/10 transition"
+          >
+            Already verified? Log in
+          </Link>
         </div>
       </main>
     );

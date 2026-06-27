@@ -43,8 +43,12 @@ export default function LoginPage() {
     setError("");
     setGoogleLoading(true);
     try {
-      await loginWithGoogle();
-      router.push("/dashboard");
+      const result = await loginWithGoogle();
+      if (result.needsVerification) {
+        router.push("/login");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setError(msg || "Google sign-in failed. Please try again.");
