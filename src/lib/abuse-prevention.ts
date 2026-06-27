@@ -71,6 +71,37 @@ const SIGNUP_FLAG_KEY = "nuvio-signed-up";
 const SIGNUP_EMAIL_KEY = "nuvio-signup-email";
 
 /**
+ * Set a cookie (expires in 1 year).
+ * Used as a backup to localStorage (some privacy modes block localStorage
+ * but allow cookies).
+ */
+function setCookie(name: string, value: string, days: number = 365): void {
+  try {
+    const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
+    document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
+  } catch {
+    // cookies may be blocked
+  }
+}
+
+/**
+ * Get a cookie value by name.
+ */
+function getCookie(name: string): string | null {
+  try {
+    const match = document.cookie
+      .split("; ")
+      .find((c) => c.startsWith(`${name}=`));
+    if (match) {
+      return decodeURIComponent(match.split("=").slice(1).join("="));
+    }
+  } catch {
+    // cookies may be blocked
+  }
+  return null;
+}
+
+/**
  * Check if an email uses a disposable/tempmail domain.
  * Returns true if the email should be blocked.
  */
@@ -82,29 +113,47 @@ export function isTempmail(email: string): boolean {
 
 /**
  * Check if this browser has already been used to sign up.
+ * Checks BOTH localStorage AND cookies (in case one is blocked).
  * Returns the previous email if so, null otherwise.
  */
 export function getPreviousSignupEmail(): string | null {
+  // Try localStorage first
   try {
     const flag = localStorage.getItem(SIGNUP_FLAG_KEY);
     const email = localStorage.getItem(SIGNUP_EMAIL_KEY);
     if (flag === "true" && email) return email;
   } catch {
-    // localStorage may be blocked (incognito, privacy settings)
+    // localStorage may be blocked
+  }
+  // Fallback: check cookies
+  try {
+    const emailCookie = getCookie("nuvio_email");
+    const flagCookie = getCookie("nuvio_signup");
+    if (flagCookie === "1" && emailCookie) return emailCookie;
+  } catch {
+    // cookies may be blocked
   }
   return null;
 }
 
 /**
  * Record that a signup happened from this browser.
- * Called after a successful signup (Auth user created).
+ * Stores in BOTH localStorage AND cookies for redundancy.
  */
 export function recordSignup(email: string): void {
+  // localStorage
   try {
     localStorage.setItem(SIGNUP_FLAG_KEY, "true");
     localStorage.setItem(SIGNUP_EMAIL_KEY, email.toLowerCase());
   } catch {
-    // localStorage may be blocked — can't track
+    // localStorage may be blocked
+  }
+  // cookies (backup)
+  try {
+    setCookie("nuvio_signup", "1", 365);
+    setCookie("nuvio_email", email.toLowerCase(), 365);
+  } catch {
+    // cookies may be blocked
   }
 }
 

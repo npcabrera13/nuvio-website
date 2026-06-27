@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { NuvioMovieSections } from "@/components/nuvio/nuvio-movie-sections";
 import { ChannelsGrid } from "@/components/nuvio/channels-grid";
-import { HowItWorks } from "@/components/nuvio/how-it-works";
 import { PriceComparison } from "@/components/nuvio/price-comparison";
 import { PricingTiers } from "@/components/nuvio/pricing-tiers";
 import { Faq } from "@/components/nuvio/faq";
@@ -75,7 +74,6 @@ export default function Home() {
           initialGenreMovies={genreMovies}
         />
         <Reveal><ChannelsGrid /></Reveal>
-        <Reveal><HowItWorks /></Reveal>
         <Reveal><PriceComparison /></Reveal>
         <Reveal><PricingTiers /></Reveal>
         <Reveal><Faq /></Reveal>

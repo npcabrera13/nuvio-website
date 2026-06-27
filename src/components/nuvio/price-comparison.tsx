@@ -81,10 +81,10 @@ export function PriceComparison() {
             </div>
           </div>
 
-          {/* Arrow */}
-          <div className="flex md:flex-col items-center justify-center gap-2 order-2 py-2">
+          {/* Arrow — points down on mobile, right on desktop */}
+          <div className="flex md:flex-col items-center justify-center gap-2 order-2 py-2 mx-auto">
             <div className="nuvio-float flex h-12 w-12 items-center justify-center rounded-full nuvio-gradient-bg text-white shadow-lg shadow-violet-900/40">
-              <ArrowDown className="h-6 w-6 md:rotate-0 rotate-90" />
+              <ArrowDown className="h-6 w-6 md:rotate-[-90deg] rotate-0" />
             </div>
             <span className="text-xs font-semibold text-muted-foreground md:hidden">switch to</span>
           </div>

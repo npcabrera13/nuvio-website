@@ -7,7 +7,6 @@ const SECTIONS = [
   { id: "now-streaming", label: "Movies" },
   { id: "browse", label: "Browse" },
   { id: "channels", label: "Channels" },
-  { id: "how-it-works", label: "How it works" },
   { id: "features", label: "App preview" },
   { id: "devices", label: "Devices" },
   { id: "compare", label: "Compare" },
