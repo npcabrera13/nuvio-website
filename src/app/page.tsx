@@ -44,7 +44,7 @@ export default function Home() {
       fetch(`${STREMIO_API}/catalog/movie/cinemeta___top.json`).then(r => r.json()),
       fetch(`${STREMIO_API}/catalog/movie/cinemeta___top/genre=Action.json`).then(r => r.json()),
     ]).then(([topData, genreData]) => {
-      const topMovies = (topData.metas || []).filter((m: any) => m.background && m.poster).map(mapMeta).slice(0, 5);
+      const topMovies = (topData.metas || []).filter((m: any) => m.background && m.poster).map(mapMeta).slice(0, 15);
       const actionMovies = (genreData.metas || []).filter((m: any) => m.background && m.poster).map(mapMeta).slice(0, 18);
       setMovies(topMovies);
       setGenreMovies(actionMovies);

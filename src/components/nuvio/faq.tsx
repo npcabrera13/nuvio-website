@@ -2,10 +2,19 @@
 
 import { useState } from "react";
 import { FAQS } from "@/lib/nuvio";
-import { Plus, HelpCircle } from "lucide-react";
+import { Plus, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
 
 export function Faq() {
   const [open, setOpen] = useState<number | null>(0);
+  const [mobileIndex, setMobileIndex] = useState(0);
+
+  const scrollMobile = (dir: "left" | "right") => {
+    if (dir === "left") {
+      setMobileIndex((i) => Math.max(0, i - 1));
+    } else {
+      setMobileIndex((i) => Math.min(FAQS.length - 1, i + 1));
+    }
+  };
 
   return (
     <section id="faq" className="relative py-14 lg:py-20">
@@ -22,7 +31,8 @@ export function Faq() {
           </p>
         </div>
 
-        <div className="mt-9 flex flex-col gap-3 max-h-[60vh] lg:max-h-none overflow-y-auto lg:overflow-visible pr-1 lg:pr-0 nuvio-scrollbar">
+        {/* Desktop: vertical accordion */}
+        <div className="hidden lg:flex flex-col gap-3 mt-9">
           {FAQS.map((item, i) => {
             const isOpen = open === i;
             return (
@@ -68,6 +78,71 @@ export function Faq() {
               </div>
             );
           })}
+        </div>
+
+        {/* Mobile: horizontal card carousel */}
+        <div className="lg:hidden mt-9">
+          <div className="flex items-center justify-between mb-3">
+            <button
+              onClick={() => scrollMobile("left")}
+              disabled={mobileIndex === 0}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-muted-foreground disabled:opacity-30 transition"
+              aria-label="Previous question"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <span className="text-xs text-muted-foreground">
+              {mobileIndex + 1} / {FAQS.length}
+            </span>
+            <button
+              onClick={() => scrollMobile("right")}
+              disabled={mobileIndex === FAQS.length - 1}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/5 text-muted-foreground disabled:opacity-30 transition"
+              aria-label="Next question"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="overflow-hidden">
+            <div
+              className="flex transition-transform duration-300 ease-out"
+              style={{ transform: `translateX(-${mobileIndex * 100}%)` }}
+            >
+              {FAQS.map((item, i) => (
+                <div key={i} className="w-full shrink-0 px-1">
+                  <div className="nuvio-card rounded-2xl p-5 min-h-[180px]">
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5 text-violet-300 ring-1 ring-white/10">
+                        <HelpCircle className="h-4 w-4" />
+                      </span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                        Question {i + 1}
+                      </span>
+                    </div>
+                    <h3 className="text-base font-bold mb-3 leading-snug">{item.q}</h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {item.a}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Dots indicator */}
+          <div className="flex items-center justify-center gap-1.5 mt-4">
+            {FAQS.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setMobileIndex(i)}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === mobileIndex ? "w-6 nuvio-gradient-bg" : "w-1.5 bg-white/20"
+                }`}
+                aria-label={`Go to question ${i + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>

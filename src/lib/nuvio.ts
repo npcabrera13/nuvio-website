@@ -310,19 +310,19 @@ export interface PricingTier {
 
 export const PRICING_TIERS: PricingTier[] = [
   {
+    id: "7",
+    duration: "1 Week",
+    price: 29,
+    perDay: "₱4.14 per day",
+    features: ["Full movie & series library", "All live channels", "Full HD streaming", "Cancel anytime"],
+  },
+  {
     id: "30",
     duration: "1 Month",
     price: 49,
     perDay: "₱1.63 per day",
     badge: "MOST POPULAR",
     highlight: true,
-    features: ["Full movie & series library", "All live channels", "Full HD streaming", "Cancel anytime"],
-  },
-  {
-    id: "7",
-    duration: "1 Week",
-    price: 29,
-    perDay: "₱4.14 per day",
     features: ["Full movie & series library", "All live channels", "Full HD streaming", "Cancel anytime"],
   },
   {
