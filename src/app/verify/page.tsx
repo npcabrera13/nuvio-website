@@ -40,13 +40,13 @@ function VerifyContent() {
           return;
         }
 
-        // Step 2: User must be logged in to assign the Nuvio account
-        // (Firebase Auth session persists, so if they signed up in this
-        // browser, they're still logged in.)
+        // Step 2: User must be logged in to assign the Nuvio account.
+        // If they're not logged in (opened email link in different browser/app),
+        // auto-redirect to login. After login, they'll be sent back here.
         if (!user) {
-          // Store the token so after login we can retry verification
           try { sessionStorage.setItem("nuvio-pending-verify", token); } catch {}
-          setStatus("need-login");
+          // Auto-redirect to login (no "need-login" screen)
+          router.replace("/login?redirect=/verify?token=" + encodeURIComponent(token));
           return;
         }
 

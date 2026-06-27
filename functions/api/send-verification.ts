@@ -60,33 +60,32 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Welcome to Nuvio</title>
+  <title>Nuvio</title>
 </head>
 <body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#333;margin:0;padding:20px;background:#fff;">
   <p style="font-size:18px;font-weight:bold;color:#7c3aed;margin:0 0 16px;">Nuvio</p>
   <p>Hi,</p>
-  <p>Thank you for signing up for Nuvio. Please verify your email address to activate your 7-day free trial:</p>
-  <p><a href="${verifyUrl}" style="color:#7c3aed;font-weight:bold;">${verifyUrl}</a></p>
-  <p>This link will expire in 24 hours. If you did not create an account, you can safely ignore this email.</p>
-  <p>Best regards,<br>Nuvio Team</p>
-  <p style="font-size:11px;color:#999;margin-top:24px;border-top:1px solid #eee;padding-top:12px;">© ${new Date().getFullYear()} Nuvio. Made in the Philippines.</p>
+  <p>Thanks for signing up. Click the link to continue:</p>
+  <p><a href="${verifyUrl}" style="color:#7c3aed;">${verifyUrl}</a></p>
+  <p>This link expires in 24 hours.</p>
+  <p>Nuvio</p>
+  <p style="font-size:11px;color:#999;margin-top:24px;border-top:1px solid #eee;padding-top:12px;">© ${new Date().getFullYear()} Nuvio</p>
 </body>
 </html>`;
 
-    const emailText = `Nuvio — Verify your email
+    const emailText = `Nuvio
 
 Hi,
 
-Thank you for signing up for Nuvio. Please verify your email address to activate your 7-day free trial:
+Thanks for signing up. Click the link to continue:
 
 ${verifyUrl}
 
-This link will expire in 24 hours. If you did not create an account, you can safely ignore this email.
+This link expires in 24 hours.
 
-Best regards,
-Nuvio Team
+Nuvio
 
-© ${new Date().getFullYear()} Nuvio. Made in the Philippines.`;
+© ${new Date().getFullYear()} Nuvio`;
 
     // Send the email via the send-email Function (worker-mailer + Gmail SMTP)
     await fetch(`${baseUrl}/api/send-email`, {
@@ -94,7 +93,7 @@ Nuvio Team
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         to: email,
-        subject: "Welcome to Nuvio — verify your email",
+        subject: "Nuvio",
         html: emailHtml,
         text: emailText,
       }),

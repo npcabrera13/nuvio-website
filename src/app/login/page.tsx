@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth, ACCOUNTS_FULL_ERROR } from "@/lib/auth-context";
 import { Mail, Lock, Eye, EyeOff, Loader2, Chrome, AlertCircle } from "lucide-react";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const { login, loginWithGoogle } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,13 +18,22 @@ export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // If already logged in and there's a redirect (e.g. from /verify), go there
+  const { user, loading: authLoading } = useAuth();
+  useEffect(() => {
+    if (!authLoading && user && redirect) {
+      router.replace(redirect);
+    }
+  }, [user, authLoading, redirect, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
       await login(email, password);
-      router.push("/dashboard");
+      // If there's a redirect (from /verify), go there. Otherwise dashboard.
+      router.push(redirect || "/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("invalid-credential") || msg.includes("wrong-password")) {
@@ -43,12 +54,8 @@ export default function LoginPage() {
     setError("");
     setGoogleLoading(true);
     try {
-      const result = await loginWithGoogle();
-      if (result.needsVerification) {
-        router.push("/login");
-      } else {
-        router.push("/dashboard");
-      }
+      await loginWithGoogle();
+      router.push(redirect || "/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg === ACCOUNTS_FULL_ERROR) {
@@ -180,5 +187,17 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
+      </main>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
