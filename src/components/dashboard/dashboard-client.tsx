@@ -536,54 +536,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
         {/* ─── ROW 2: RENEWAL HERO (front and center!) ─── */}
         <RenewalHero isExpired={isExpired} />
 
-        {/* ─── EXPIRED BANNER ─── */}
-        {isExpired && (
-          <div className="nuvio-solid-card rounded-2xl p-4 mb-4 border-pink-500/20 flex items-center gap-3">
-            <Heart className="h-5 w-5 text-pink-400 shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm font-bold text-pink-300">We missed you 💜</p>
-              <p className="text-xs text-muted-foreground">Renew above to unlock everything again.</p>
-            </div>
-          </div>
-        )}
-
-        {/* ─── QUICK ACTIONS ─── */}
-        <div className="grid grid-cols-2 gap-2 mb-5">
-          <a href="https://nuvio.tv" target="_blank" rel="noopener noreferrer" className="nuvio-gradient-bg rounded-xl p-3 flex flex-col items-center gap-1 transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-violet-900/20">
-            <Play className="h-5 w-5 text-white" />
-            <span className="text-xs font-bold text-white">Go to nuvio.tv</span>
-          </a>
-          <a href="/#browse" className="nuvio-solid-card rounded-xl p-3 flex flex-col items-center gap-1 hover:border-white/15 transition group">
-            <Search className="h-5 w-5 text-cyan-400 group-hover:scale-110 transition" />
-            <span className="text-xs font-semibold">Browse movies</span>
-          </a>
-        </div>
-
-        {/* ─── WATCHLIST ─── */}
-        {savedMovies.length > 0 && (
-          <div className="mb-5">
-            <ContentRow title="My watchlist" icon={BookmarkCheck} movies={savedMovies} onOpen={openMovie} savedIds={savedIds} onToggleSave={toggleSave} accent="text-violet-400" />
-          </div>
-        )}
-
-        {/* ─── TRENDING MOVIES ─── */}
-        <div className="mb-5">
-          <ContentRow title="Trending movies" icon={Flame} movies={movies.slice(1, 13)} onOpen={openMovie} savedIds={savedIds} onToggleSave={toggleSave} accent="text-amber-400" />
-        </div>
-
-        {/* ─── POPULAR SERIES ─── */}
-        {series.length > 0 && (
-          <div className="mb-5">
-            <ContentRow title="Popular series" icon={Tv} movies={series.slice(0, 12)} onOpen={openMovie} savedIds={savedIds} onToggleSave={toggleSave} accent="text-cyan-400" />
-          </div>
-        )}
-
-        {/* ─── LIVE CHANNELS ─── */}
-        <div className="mb-5">
-          <ChannelStrip />
-        </div>
-
-        {/* ─── NUVIO CREDENTIALS + COPY BOTH ─── */}
+        {/* ─── NUVIO CREDENTIALS (right below payment options, easy to find) ─── */}
         <div className="nuvio-solid-card rounded-2xl p-4 sm:p-5 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500/20 to-pink-500/20 text-violet-400 ring-1 ring-violet-500/20">
@@ -617,6 +570,30 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
           <a href="https://nuvio.tv" target="_blank" rel="noopener noreferrer" className="mt-2 w-full rounded-xl border border-white/[0.08] bg-white/[0.02] py-2.5 text-xs font-semibold text-center hover:bg-white/[0.05] transition flex items-center justify-center gap-1.5">
             <Play className="h-3.5 w-3.5 text-violet-400" /> Open nuvio.tv
           </a>
+        </div>
+
+        {/* ─── EXPIRED BANNER ─── */}
+        {isExpired && (
+          <div className="nuvio-solid-card rounded-2xl p-4 mb-4 border-pink-500/20 flex items-center gap-3">
+            <Heart className="h-5 w-5 text-pink-400 shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm font-bold text-pink-300">We missed you 💜</p>
+              <p className="text-xs text-muted-foreground">Renew above to unlock everything again.</p>
+            </div>
+          </div>
+        )}
+
+        {/* ─── QUICK ACTIONS ─── */}
+        <div className="grid grid-cols-1 gap-2 mb-5">
+          <a href="https://nuvio.tv" target="_blank" rel="noopener noreferrer" className="nuvio-gradient-bg rounded-xl p-3 flex items-center justify-center gap-2 transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-violet-900/20">
+            <Play className="h-5 w-5 text-white" />
+            <span className="text-xs font-bold text-white">Go to nuvio.tv</span>
+          </a>
+        </div>
+
+        {/* ─── LIVE CHANNELS ─── */}
+        <div className="mb-5">
+          <ChannelStrip />
         </div>
 
         {/* ─── ACCOUNT + REFERRAL ─── */}

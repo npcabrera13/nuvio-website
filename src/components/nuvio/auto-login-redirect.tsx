@@ -5,23 +5,26 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
 /**
- * If the user is already logged in AND has a token assigned,
- * bounce them straight to /dashboard so they don't see the landing page again.
+ * If the user is already logged in (Firebase Auth session persists via
+ * localStorage/IndexedDB), bounce them straight to /dashboard.
  *
- * Users who are logged in but have NO token (signed up, haven't verified email
- * yet) are NOT redirected — they stay on the landing page.
+ * Firebase Auth restores the session on page load, so this works when:
+ * - User signed up, closed the tab, and came back later
+ * - User clicks the site URL while already logged in
+ * - User navigates to / after logging in
  */
 export function AutoLoginRedirect() {
   const router = useRouter();
-  const { user, profile, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     if (loading) return;
-    // Only redirect if we have a user AND a profile with a token.
-    if (user && profile?.tokenId && profile.nuvioEmail) {
+    // If we have a Firebase Auth user, send them to the dashboard.
+    // The dashboard handles all the states (verified, unverified, no token).
+    if (user) {
       router.replace("/dashboard");
     }
-  }, [user, profile, loading, router]);
+  }, [user, loading, router]);
 
   return null;
 }
