@@ -92,11 +92,14 @@ const assignTokenToUser = async (
   firebaseUser: User,
   userEmail: string | null
 ): Promise<string> => {
-  // 1. Find an available token — status must be "available" AND name must be empty.
+  // 1. Find an available token.
+  //    The admin panel creates tokens with status: "active" and assignedTo: null.
+  //    So "available" = status is "active" AND assignedTo is null/empty.
+  //    We query by status, then filter client-side for assignedTo.
   const q = query(
     collection(db, "customers"),
-    where("status", "==", "available"),
-    limit(1)
+    where("status", "==", "active"),
+    limit(10)
   );
   const snapshot = await getDocs(q);
 
@@ -104,23 +107,36 @@ const assignTokenToUser = async (
     throw new Error(ACCOUNTS_FULL_ERROR);
   }
 
-  const tokenDoc = snapshot.docs[0];
-  const tokenData = tokenDoc.data();
-  const tokenId = tokenDoc.id;
+  // Find the first token that's NOT assigned to anyone
+  let tokenDoc = null;
+  let tokenData = null;
+  for (const doc_snap of snapshot.docs) {
+    const data = doc_snap.data();
+    const assignedTo = data.assignedTo;
+    // Available = assignedTo is null, empty, or missing
+    if (!assignedTo || assignedTo === "" || assignedTo === null) {
+      tokenDoc = doc_snap;
+      tokenData = data;
+      break;
+    }
+  }
 
-  // Safety check: if this token somehow already has a user assigned, skip it.
-  if (tokenData.name && tokenData.name.trim() !== "") {
+  if (!tokenDoc || !tokenData) {
     throw new Error(ACCOUNTS_FULL_ERROR);
   }
+
+  const tokenId = tokenDoc.id;
 
   const now = new Date();
   const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7-day trial
 
   // 2. Update the token doc with the user's info (1 write).
+  //    Set assignedTo so the admin panel can track who has it.
   //    The 7-day expiry OVERWRITES whatever the admin set — the free trial
   //    is always 7 days from verification, regardless of admin's placeholder.
   await updateDoc(doc(db, "customers", tokenId), {
     name: userEmail ?? "",
+    assignedTo: firebaseUser.uid,
     status: "active",
     expiresAt: Timestamp.fromDate(expires),
   });
