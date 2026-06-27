@@ -611,6 +611,9 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
             <Link href="/" aria-label="Home" className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] text-muted-foreground hover:text-foreground transition">
               <Home className="h-4 w-4" />
             </Link>
+            <button onClick={signOut} aria-label="Log out" className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] text-muted-foreground hover:text-red-400 transition">
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
 

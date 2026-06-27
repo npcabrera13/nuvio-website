@@ -60,32 +60,85 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Nuvio</title>
 </head>
-<body style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#333;margin:0;padding:20px;background:#fff;">
-  <p style="font-size:18px;font-weight:bold;color:#7c3aed;margin:0 0 16px;">Nuvio</p>
-  <p>Hi,</p>
-  <p>Thanks for signing up. Click the link to continue:</p>
-  <p><a href="${verifyUrl}" style="color:#7c3aed;">${verifyUrl}</a></p>
-  <p>This link expires in 24 hours.</p>
-  <p>Nuvio</p>
-  <p style="font-size:11px;color:#999;margin-top:24px;border-top:1px solid #eee;padding-top:12px;">© ${new Date().getFullYear()} Nuvio</p>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#7c3aed,#ec4899);padding:28px 40px;text-align:center;">
+              <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:0.5px;">Nuvio</h1>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:36px 40px 20px;">
+              <h2 style="margin:0 0 16px;color:#1a1a1a;font-size:18px;font-weight:600;">Hi there,</h2>
+              <p style="margin:0 0 16px;color:#4a4a4a;font-size:15px;line-height:1.6;">
+                Thanks for signing up for Nuvio — your all-in-one streaming bundle with movies, series, anime, and live channels.
+              </p>
+              <p style="margin:0 0 24px;color:#4a4a4a;font-size:15px;line-height:1.6;">
+                Click the button below to confirm your email and activate your account:
+              </p>
+              <!-- Button -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom:24px;">
+                    <a href="${verifyUrl}" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#ec4899);color:#ffffff;font-weight:600;font-size:15px;padding:14px 40px;border-radius:10px;text-decoration:none;">Confirm Email</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:0 0 12px;color:#6b7280;font-size:13px;line-height:1.5;">
+                Or copy this link: <a href="${verifyUrl}" style="color:#7c3aed;word-break:break-all;">${verifyUrl}</a>
+              </p>
+              <p style="margin:0 0 8px;color:#6b7280;font-size:13px;line-height:1.5;">
+                This link expires in 24 hours.
+              </p>
+            </td>
+          </tr>
+          <!-- Divider -->
+          <tr>
+            <td style="padding:0 40px;">
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:0;">
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 40px 32px;">
+              <p style="margin:0 0 8px;color:#6b7280;font-size:12px;line-height:1.5;">
+                Nuvio is an independent streaming aggregator. This email was sent because someone signed up with your email address.
+              </p>
+              <p style="margin:0;color:#9ca3af;font-size:11px;">
+                &copy; ${new Date().getFullYear()} Nuvio. All rights reserved.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
 
     const emailText = `Nuvio
 
-Hi,
+Hi there,
 
-Thanks for signing up. Click the link to continue:
+Thanks for signing up for Nuvio — your all-in-one streaming bundle with movies, series, anime, and live channels.
+
+Click the link below to confirm your email and activate your account:
 
 ${verifyUrl}
 
 This link expires in 24 hours.
 
-Nuvio
+Nuvio is an independent streaming aggregator. This email was sent because someone signed up with your email address.
 
-© ${new Date().getFullYear()} Nuvio`;
+© ${new Date().getFullYear()} Nuvio. All rights reserved.`;
 
     // Send the email via the send-email Function (worker-mailer + Gmail SMTP)
     await fetch(`${baseUrl}/api/send-email`, {
@@ -93,7 +146,7 @@ Nuvio
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         to: email,
-        subject: "Nuvio",
+        subject: "Welcome to Nuvio",
         html: emailHtml,
         text: emailText,
       }),
