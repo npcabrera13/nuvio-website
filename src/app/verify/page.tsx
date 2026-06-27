@@ -3,17 +3,15 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
-import { db } from "@/lib/firebase";
-import { doc, updateDoc } from "firebase/firestore";
-import { Loader2, CheckCircle, XCircle, Sparkles } from "lucide-react";
+import { useAuth, ACCOUNTS_FULL_ERROR } from "@/lib/auth-context";
+import { Loader2, CheckCircle, XCircle, Sparkles, Users } from "lucide-react";
 
 function VerifyContent() {
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("token");
-  const { refreshProfile, user } = useAuth();
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
+  const { user, loading: authLoading, completeVerification, refreshProfile } = useAuth();
+  const [status, setStatus] = useState<"loading" | "success" | "error" | "accounts-full" | "need-login">("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
@@ -23,10 +21,12 @@ function VerifyContent() {
       return;
     }
 
+    // Wait for Firebase Auth to load before proceeding
+    if (authLoading) return;
+
     async function verify() {
       try {
-        // Call the verify-email Function — it verifies the HMAC signature
-        // WITHOUT touching Firestore (the token is a signed JWT, not a DB doc).
+        // Step 1: Verify the JWT signature via the Function (0 Firestore)
         const res = await fetch("/api/verify-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -39,20 +39,29 @@ function VerifyContent() {
           return;
         }
 
-        // The Function returned { tokenId } — update the customer doc status to "active".
-        // This is the ONLY Firestore write for verification (1 write, no reads).
-        if (data.tokenId) {
-          try {
-            await updateDoc(doc(db, "customers", data.tokenId), {
-              status: "active",
-            });
-          } catch (err) {
-            console.error("Failed to update customer status:", err);
+        // Step 2: User must be logged in to assign the Nuvio account
+        // (Firebase Auth session persists, so if they signed up in this
+        // browser, they're still logged in.)
+        if (!user) {
+          // Store the token so after login we can retry verification
+          try { sessionStorage.setItem("nuvio-pending-verify", token); } catch {}
+          setStatus("need-login");
+          return;
+        }
+
+        // Step 3: Assign the Nuvio account (1 read + 1 write)
+        try {
+          await completeVerification();
+        } catch (err) {
+          if (err instanceof Error && err.message === ACCOUNTS_FULL_ERROR) {
+            setStatus("accounts-full");
+            return;
           }
+          throw err;
         }
 
         setStatus("success");
-        if (user) await refreshProfile();
+        await refreshProfile();
         setTimeout(() => router.push("/dashboard"), 2500);
       } catch {
         setStatus("error");
@@ -60,7 +69,7 @@ function VerifyContent() {
       }
     }
     verify();
-  }, [token, user, refreshProfile, router]);
+  }, [token, authLoading, user, completeVerification, refreshProfile, router]);
 
   return (
     <main className="min-h-screen flex items-center justify-center px-4 py-20">
@@ -107,6 +116,43 @@ function VerifyContent() {
                   Go to dashboard →
                 </Link>
               </p>
+            </>
+          )}
+
+          {status === "need-login" && (
+            <>
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-violet-500/15 mb-5">
+                <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
+              </div>
+              <h1 className="text-2xl font-bold mb-2">Almost there!</h1>
+              <p className="text-sm text-muted-foreground mb-5">
+                Your email is verified. Log in to claim your Nuvio account.
+              </p>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-xl nuvio-gradient-bg px-5 py-3 text-sm font-semibold text-white"
+              >
+                Log in to continue
+              </Link>
+            </>
+          )}
+
+          {status === "accounts-full" && (
+            <>
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/15 mb-5">
+                <Users className="h-8 w-8 text-amber-400" />
+              </div>
+              <h1 className="text-2xl font-bold mb-2">All accounts are taken</h1>
+              <p className="text-sm text-muted-foreground mb-5">
+                Your email is verified, but all Nuvio accounts are currently assigned.
+                New accounts are added regularly — please check back soon.
+              </p>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold hover:bg-white/10 transition"
+              >
+                Go to login
+              </Link>
             </>
           )}
 

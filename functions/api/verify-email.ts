@@ -65,9 +65,9 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
       );
     }
 
-    // Return the tokenId so the client can update customers/{tokenId}.status = "active"
+    // Return success + the email (no tokenId — account is assigned client-side)
     return new Response(
-      JSON.stringify({ success: true, tokenId: payload.tokenId, email: payload.email }),
+      JSON.stringify({ success: true, email: payload.email, uid: payload.uid }),
       { headers: { "Content-Type": "application/json" } }
     );
   } catch {

@@ -408,8 +408,9 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-violet-400" /></div>;
   }
 
-  // Unverified user — status is "pending" (email sent, not clicked yet)
-  if (profile && profile.status === "pending") {
+  // User is logged in but has NO token assigned (displayName is empty).
+  // This means they signed up but haven't clicked the verification email link yet.
+  if (!user.displayName) {
     return (
       <main className="min-h-screen flex items-center justify-center px-4 py-20">
         <div className="nuvio-solid-card rounded-2xl p-6 max-w-md text-center">
@@ -417,9 +418,22 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
             <Mail className="h-7 w-7 text-amber-400" />
           </div>
           <h1 className="text-xl font-bold mb-2">Verify your email</h1>
-          <p className="text-sm text-muted-foreground mb-5">We sent a link to <span className="font-semibold text-foreground">{user.email}</span>.</p>
-          <button onClick={async () => { await fetch("/api/send-verification", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({email:user.email, uid:user.uid, tokenId:profile.tokenId}) }); }}
-            className="inline-flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-sm font-semibold hover:bg-white/[0.06] transition">Resend email</button>
+          <p className="text-sm text-muted-foreground mb-5">
+            We sent a verification link to <span className="font-semibold text-foreground">{user.email}</span>.
+            Click it to claim your Nuvio account.
+          </p>
+          <button
+            onClick={async () => {
+              await fetch("/api/send-verification", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: user.email, uid: user.uid }),
+              });
+            }}
+            className="inline-flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-sm font-semibold hover:bg-white/[0.06] transition"
+          >
+            Resend email
+          </button>
           <button onClick={signOut} className="mt-3 block w-full text-center text-xs text-muted-foreground hover:text-foreground">Log out</button>
         </div>
       </main>
@@ -450,7 +464,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
     );
   }
 
-  // No token assigned — accounts were full when they signed up
+  // No token assigned — accounts were full when they verified
   if (!profile.tokenId || !profile.nuvioEmail) {
     return (
       <main className="min-h-screen flex items-center justify-center px-4 py-20">

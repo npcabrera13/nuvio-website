@@ -25,10 +25,10 @@ async function sign(payload: string, secret: string): Promise<string> {
 
 export const onRequestPost = async ({ request, env }: { request: Request; env: Env }) => {
   try {
-    const { email, uid, tokenId } = await request.json();
-    if (!email || !uid || !tokenId) {
+    const { email, uid } = await request.json();
+    if (!email || !uid) {
       return new Response(
-        JSON.stringify({ error: "email, uid, and tokenId required" }),
+        JSON.stringify({ error: "email and uid required" }),
         { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
@@ -37,8 +37,10 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     const secret = env.VERIFICATION_SECRET || "nuvio-verification-secret-2026";
 
     // Build the signed token: base64(payload).signature
+    // NOTE: No tokenId here — the Nuvio account is assigned AFTER verification,
+    // not at signup. This prevents wasting accounts on unverified emails.
     const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-    const payload = JSON.stringify({ uid, email, tokenId, exp: expiresAt });
+    const payload = JSON.stringify({ uid, email, exp: expiresAt });
     const payloadB64 = btoa(payload)
       .replace(/\+/g, "-")
       .replace(/\//g, "_")
