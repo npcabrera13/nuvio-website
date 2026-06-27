@@ -4,7 +4,6 @@
 
 interface Env {
   VERIFICATION_SECRET: string;
-  APP_URL: string; // e.g. "https://nuviotv.pages.dev" — set this in Cloudflare!
 }
 
 /** Sign a payload with HMAC-SHA256 using Web Crypto API (works in Workers) */
@@ -49,15 +48,13 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     const signature = await sign(payloadB64, secret);
     const token = `${payloadB64}.${signature}`;
 
-    // Use APP_URL env var for the PUBLIC verify link (what the user clicks).
-    // This must be your deployed URL (e.g. "https://nuviotv.pages.dev").
-    // Falls back to request.url origin if APP_URL is not set.
-    const publicBaseUrl = env.APP_URL || new URL(request.url).origin;
-    const verifyUrl = `${publicBaseUrl}/verify?token=${token}`;
-
-    // For the INTERNAL fetch to /api/send-email, use the request origin
-    // (works within Cloudflare's network regardless of public URL)
-    const internalBaseUrl = new URL(request.url).origin;
+    // Build the base URL from the Host header — always correct, no env var needed.
+    // - Local dev: Host = "localhost:3000" → http://localhost:3000
+    // - Production: Host = "nuviotv.pages.dev" → https://nuviotv.pages.dev
+    const host = request.headers.get("host") || new URL(request.url).host;
+    const protocol = host.includes("localhost") ? "http" : "https";
+    const baseUrl = `${protocol}://${host}`;
+    const verifyUrl = `${baseUrl}/verify?token=${token}`;
 
     const emailHtml = `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#0a0a0f;padding:40px 24px;border-radius:16px;">
       <h1 style="color:#f5f5f7;text-align:center;"><span style="background:linear-gradient(100deg,#a78bfa,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Nuvio</span></h1>
@@ -68,7 +65,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
     </div>`;
 
     // Send the email via the send-email Function (worker-mailer + Gmail SMTP)
-    await fetch(`${internalBaseUrl}/api/send-email`, {
+    await fetch(`${baseUrl}/api/send-email`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
