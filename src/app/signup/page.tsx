@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth, ACCOUNTS_FULL_ERROR } from "@/lib/auth-context";
 import {
-  isTempmail,
   getPreviousSignupEmail,
   recordSignup,
 } from "@/lib/abuse-prevention";
@@ -34,21 +33,34 @@ export default function SignupPage() {
       return;
     }
 
-    // Block 1: tempmail domains
-    if (isTempmail(email)) {
-      setTempmailBlocked(true);
-      return;
+    // Block 1: tempmail domains — check against 100k+ domain list (server-side)
+    // This happens BEFORE Firebase Auth user creation, so fake emails never
+    // enter the Auth database.
+    setLoading(true);
+    try {
+      const validateRes = await fetch("/api/validate-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const validateData = await validateRes.json();
+      if (!validateData.allowed) {
+        setLoading(false);
+        setTempmailBlocked(true);
+        return;
+      }
+    } catch {
+      // If the validation service is down, proceed (don't block legit users)
     }
 
     // Block 2: multi-account check (client-side, localStorage)
     const prevEmail = getPreviousSignupEmail();
     if (prevEmail && prevEmail !== email.toLowerCase()) {
-      // They already signed up with a DIFFERENT email from this browser
+      setLoading(false);
       setMultiAccountWarning(prevEmail);
       return;
     }
 
-    setLoading(true);
     try {
       const result = await signup(email, password);
       // Record this signup in localStorage (anti-abuse)
