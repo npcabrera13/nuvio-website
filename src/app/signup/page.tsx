@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
-import { Mail, Lock, Eye, EyeOff, Loader2, Chrome, AlertCircle, CheckCircle } from "lucide-react";
+import { useAuth, ACCOUNTS_FULL_ERROR } from "@/lib/auth-context";
+import { Mail, Lock, Eye, EyeOff, Loader2, Chrome, AlertCircle, CheckCircle, Users } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -16,6 +16,7 @@ export default function SignupPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [accountsFull, setAccountsFull] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +37,9 @@ export default function SignupPage() {
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("email-already-in-use")) {
+      if (msg === ACCOUNTS_FULL_ERROR) {
+        setAccountsFull(true);
+      } else if (msg.includes("email-already-in-use")) {
         setError("An account with this email already exists. Try logging in.");
       } else if (msg.includes("invalid-email")) {
         setError("Please enter a valid email address.");
@@ -62,11 +65,38 @@ export default function SignupPage() {
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      setError(msg || "Google sign-in failed. Please try again.");
+      if (msg === ACCOUNTS_FULL_ERROR) {
+        setAccountsFull(true);
+      } else {
+        setError(msg || "Google sign-in failed. Please try again.");
+      }
     } finally {
       setGoogleLoading(false);
     }
   };
+
+  if (accountsFull) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4 py-20">
+        <div className="w-full max-w-md nuvio-card rounded-3xl p-8 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/15 mb-5">
+            <Users className="h-8 w-8 text-amber-400" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">All accounts are taken</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            We&apos;re sorry — all available Nuvio accounts are currently assigned. New accounts
+            are added regularly. Please check back soon, or message us to be notified.
+          </p>
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold hover:bg-white/10 transition"
+          >
+            Back to home
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   if (success) {
     return (

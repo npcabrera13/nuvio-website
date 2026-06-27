@@ -9,7 +9,7 @@ import {
   Loader2, Copy, Check, LogOut, Clock, Mail, Sparkles,
   Tv, Film, ChevronRight, Crown, Gift, Key,
   Heart, Star, Home, Play, Flame, Bookmark, BookmarkCheck,
-  Search, Zap, ArrowRight, CheckCircle2
+  Search, Zap, ArrowRight, CheckCircle2, Users
 } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
 
@@ -426,8 +426,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
   }
 
   if (!profile) {
-    // Profile couldn't be loaded — auto-create it so users aren't stuck on
-    // an infinite spinner. (With public Firestore rules, this write works.)
+    // Profile couldn't be loaded — show a loading/refresh screen
     return (
       <main className="min-h-screen flex items-center justify-center px-4 py-20">
         <div className="nuvio-solid-card rounded-2xl p-6 max-w-md text-center">
@@ -445,6 +444,27 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
             Refresh
           </button>
           <button onClick={signOut} className="mt-3 block w-full text-center text-xs text-muted-foreground hover:text-foreground">Log out</button>
+        </div>
+      </main>
+    );
+  }
+
+  // No token assigned — accounts were full when they signed up
+  if (!profile.stremioToken || !profile.nuvioEmail) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4 py-20">
+        <div className="nuvio-solid-card rounded-2xl p-6 max-w-md text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/15 mb-4">
+            <Users className="h-7 w-7 text-amber-400" />
+          </div>
+          <h1 className="text-xl font-bold mb-2">No account assigned yet</h1>
+          <p className="text-sm text-muted-foreground mb-5">
+            All Nuvio accounts are currently assigned to other users. New accounts are
+            added regularly — please check back soon.
+          </p>
+          <button onClick={signOut} className="inline-flex items-center justify-center rounded-xl nuvio-gradient-bg px-5 py-2.5 text-sm font-semibold text-white">
+            Log out
+          </button>
         </div>
       </main>
     );

@@ -18,6 +18,11 @@ import {
   updateDoc,
   serverTimestamp,
   Timestamp,
+  collection,
+  query,
+  where,
+  limit,
+  getDocs,
 } from "firebase/firestore";
 
 /** Admin emails — bypass email verification (go straight to dashboard) */
@@ -26,10 +31,15 @@ const ADMIN_EMAILS = [
   "gensnapdragon5@gmail.com",
 ].map((e) => e.toLowerCase());
 
+/** Error thrown when no tokens are available to assign */
+export const ACCOUNTS_FULL_ERROR = "ACCOUNTS_FULL";
+
 interface UserProfile {
   uid: string;
   email: string | null;
   stremioToken: string;
+  nuvioEmail: string;
+  nuvioPassword: string;
   status: "active" | "expired";
   expiresAt: Timestamp | null;
   createdAt: Timestamp | null;
@@ -49,16 +59,70 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-/** Generate a random Nuvio token: nuvio_ + 8 alphanumeric chars */
-function generateStremioToken(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  return (
-    "nuvio_" +
-    Array.from({ length: 8 })
-      .map(() => chars[Math.floor(Math.random() * chars.length)])
-      .join("")
+/**
+ * Find an available token in the `tokens` collection and assign it to the user.
+ *
+ * The admin pre-creates token docs (via the admin panel) with real Nuvio.tv
+ * credentials. Each token doc looks like:
+ *   tokens/{tokenId} = {
+ *     nuvioEmail: "user@nuvio.tv",
+ *     nuvioPassword: "pass123",
+ *     status: "available" | "assigned",
+ *     assignedTo: uid | null,
+ *     createdAt: timestamp
+ *   }
+ *
+ * This function:
+ *   1. Queries for a token where status == "available"
+ *   2. If none found → throws ACCOUNTS_FULL_ERROR
+ *   3. Creates customers/{uid} with the token's Nuvio credentials
+ *   4. Marks the token as assigned to this user
+ */
+const assignTokenToUser = async (
+  firebaseUser: User,
+  emailVerified: boolean
+): Promise<string> => {
+  // 1. Find an available token
+  const q = query(
+    collection(db, "tokens"),
+    where("status", "==", "available"),
+    limit(1)
   );
-}
+  const snapshot = await getDocs(q);
+
+  if (snapshot.empty) {
+    throw new Error(ACCOUNTS_FULL_ERROR);
+  }
+
+  const tokenDoc = snapshot.docs[0];
+  const tokenData = tokenDoc.data();
+  const tokenId = tokenDoc.id;
+
+  const now = new Date();
+  const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7-day trial
+
+  // 2. Create the customer doc with the token's Nuvio credentials
+  await setDoc(doc(db, "customers", firebaseUser.uid), {
+    email: firebaseUser.email,
+    stremioToken: tokenId,
+    nuvioEmail: tokenData.nuvioEmail || "",
+    nuvioPassword: tokenData.nuvioPassword || "",
+    status: "active",
+    expiresAt: Timestamp.fromDate(expires),
+    createdAt: serverTimestamp(),
+    emailVerified,
+  });
+
+  // 3. Mark the token as assigned to this user
+  await updateDoc(doc(db, "tokens", tokenId), {
+    status: "assigned",
+    assignedTo: firebaseUser.uid,
+    assignedAt: serverTimestamp(),
+    expiresAt: Timestamp.fromDate(expires),
+  });
+
+  return tokenId;
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -75,44 +139,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           uid,
           email: data.email ?? email,
           stremioToken: data.stremioToken ?? "",
+          nuvioEmail: data.nuvioEmail ?? "",
+          nuvioPassword: data.nuvioPassword ?? "",
           status: data.status ?? "active",
           expiresAt: data.expiresAt ?? null,
           createdAt: data.createdAt ?? null,
           emailVerified: data.emailVerified ?? false,
         });
       } else {
-        // User exists in Firebase Auth but has no Firestore doc yet.
-        // Auto-create one so the dashboard doesn't show an infinite spinner.
-        try {
-          const token = generateStremioToken();
-          const now = new Date();
-          const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-          await setDoc(ref, {
-            email,
-            stremioToken: token,
-            status: "active",
-            expiresAt: Timestamp.fromDate(expires),
-            createdAt: serverTimestamp(),
-            emailVerified: true,
-          });
-          await setDoc(doc(db, "tokens", token), {
-            uid,
-            status: "active",
-            expiresAt: Timestamp.fromDate(expires),
-          });
-          setProfile({
-            uid,
-            email,
-            stremioToken: token,
-            status: "active",
-            expiresAt: Timestamp.fromDate(expires),
-            createdAt: null,
-            emailVerified: true,
-          });
-        } catch (createErr) {
-          console.error("Failed to auto-create profile:", createErr);
-          setProfile(null);
-        }
+        // User exists in Firebase Auth but has no customer doc.
+        // This can happen if signup failed midway (e.g. token assignment
+        // threw ACCOUNTS_FULL). Don't auto-create — just set profile to
+        // null so the dashboard can show the appropriate screen.
+        setProfile(null);
       }
     } catch (err) {
       console.error("Failed to fetch profile:", err);
@@ -137,47 +176,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) await fetchProfile(user.uid, user.email);
   }, [user, fetchProfile]);
 
-  const createCustomerDocs = useCallback(
-    async (firebaseUser: User, emailVerified: boolean) => {
-      const token = generateStremioToken();
-      const now = new Date();
-      const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
-
-      // customers/{uid} — user's private profile
-      await setDoc(doc(db, "customers", firebaseUser.uid), {
-        email: firebaseUser.email,
-        stremioToken: token,
-        status: "active",
-        expiresAt: Timestamp.fromDate(expires),
-        createdAt: serverTimestamp(),
-        emailVerified,
-      });
-
-      // tokens/{token} — public doc for Stremio API validation
-      await setDoc(doc(db, "tokens", token), {
-        uid: firebaseUser.uid,
-        status: "active",
-        expiresAt: Timestamp.fromDate(expires),
-      });
-
-      return token;
-    },
-    []
-  );
-
   const signup = useCallback(
     async (email: string, password: string) => {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
 
       if (isAdmin) {
-        // Admin: auto-verify, skip email flow, go straight to dashboard
-        await createCustomerDocs(cred.user, true);
+        // Admin: assign token + auto-verify, skip email flow
+        await assignTokenToUser(cred.user, true);
         return { needsVerification: false };
       }
 
-      // Regular user: create docs, send verification email
-      await createCustomerDocs(cred.user, false);
+      // Regular user: assign token, then send verification email
+      await assignTokenToUser(cred.user, false);
       try {
         const res = await fetch("/api/send-verification", {
           method: "POST",
@@ -201,7 +212,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return { needsVerification: true };
     },
-    [createCustomerDocs]
+    []
   );
 
   const login = useCallback(async (email: string, password: string) => {
@@ -213,12 +224,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const cred = await signInWithPopup(auth, provider);
     const snap = await getDoc(doc(db, "customers", cred.user.uid));
     if (!snap.exists()) {
-      // Google emails are pre-verified by Google
-      await createCustomerDocs(cred.user, true);
+      // New Google user — assign a token (Google emails are pre-verified)
+      await assignTokenToUser(cred.user, true);
       return { needsVerification: false };
     }
     return { needsVerification: !snap.data()?.emailVerified };
-  }, [createCustomerDocs]);
+  }, []);
 
   const signOut = useCallback(async () => {
     await firebaseSignOut(auth);

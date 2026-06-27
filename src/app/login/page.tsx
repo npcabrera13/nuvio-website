@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, ACCOUNTS_FULL_ERROR } from "@/lib/auth-context";
 import { Mail, Lock, Eye, EyeOff, Loader2, Chrome, AlertCircle } from "lucide-react";
 
 export default function LoginPage() {
@@ -51,7 +51,11 @@ export default function LoginPage() {
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      setError(msg || "Google sign-in failed. Please try again.");
+      if (msg === ACCOUNTS_FULL_ERROR) {
+        setError("All Nuvio accounts are currently taken. Please check back soon.");
+      } else {
+        setError(msg || "Google sign-in failed. Please try again.");
+      }
     } finally {
       setGoogleLoading(false);
     }
