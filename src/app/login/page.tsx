@@ -38,10 +38,25 @@ function LoginContent() {
       const errorCode = (err as { code?: string })?.code || "";
       const msg = err instanceof Error ? err.message : String(err);
       const combined = `${errorCode} ${msg}`.toLowerCase();
+
       if (combined.includes("too-many-requests")) {
         setError("Too many attempts. Please try again later.");
       } else {
-        setError("Incorrect email or password. Don't have an account? Sign up.");
+        // Check if the account actually exists using fetchSignInMethodsForEmail
+        // NOTE: This requires "Email Enumeration Protection" to be DISABLED in
+        // Firebase Console → Authentication → Settings → User Actions
+        try {
+          const methods = await fetchSignInMethodsForEmail(auth, email);
+          if (methods.length === 0) {
+            // Account doesn't exist
+            setError("Don't have an account? Sign up.");
+          } else {
+            // Account exists → wrong password
+            setError("Incorrect password. Try again.");
+          }
+        } catch {
+          setError("Incorrect email or password.");
+        }
       }
     } finally {
       setLoading(false);
