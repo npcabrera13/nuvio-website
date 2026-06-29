@@ -156,6 +156,25 @@ function RenewalHero({ isExpired }: { isExpired: boolean }) {
         <button
           onClick={async () => {
             setPayLoading(true);
+            setPayError("");
+
+            // CRITICAL: Check if accounts are available BEFORE starting payment
+            // Don't let users pay if there's no account to assign them
+            try {
+              const checkRes = await fetch("/api/check-accounts", {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+              });
+              const checkData = await checkRes.json();
+              if (!checkData.available) {
+                setPayError("All Nuvio accounts are currently taken. Please check back later.");
+                setPayLoading(false);
+                return;
+              }
+            } catch {
+              // If check fails, proceed with payment (better to try than block)
+            }
+
             try {
               const res = await fetch("/api/paymongo/create-session", {
                 method: "POST",
