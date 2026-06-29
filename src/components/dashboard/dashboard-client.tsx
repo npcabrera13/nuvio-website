@@ -398,7 +398,7 @@ function CopyField({ label, value, icon: Icon }: { label: string; value: string;
 
 export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; series: NuvioMovie[] }) {
   const router = useRouter();
-  const { user, profile, loading, signOut, refreshProfile, assignTokenAfterPayment } = useAuth();
+  const { user, profile, loading, profileLoading: isProfileStillLoading, signOut, refreshProfile, assignTokenAfterPayment } = useAuth();
   const redirected = useRef(false);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [copiedBoth, setCopiedBoth] = useState(false);
@@ -493,7 +493,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
     }
   }, [loading, user, router]);
 
-  if (loading || !user || profileLoading) {
+  if (loading || !user || isProfileStillLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-violet-400" /></div>;
   }
 
