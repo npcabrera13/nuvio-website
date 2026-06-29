@@ -38,6 +38,7 @@ function LoginContent() {
       const errorCode = (err as { code?: string })?.code || "";
       const msg = err instanceof Error ? err.message : String(err);
       const errorInfo = `${errorCode} ${msg}`.toLowerCase();
+      console.log("Login error:", { errorCode, msg, errorInfo });
 
       if (errorInfo.includes("too-many-requests")) {
         setError("Too many attempts. Please try again later.");
@@ -45,20 +46,37 @@ function LoginContent() {
         setError("Don't have an account? Sign up.");
       } else if (errorInfo.includes("wrong-password")) {
         setError("Incorrect password. Try again.");
-      } else {
-        // invalid-credential — could be wrong password OR user not found
-        // Try fetchSignInMethodsForEmail to distinguish
+      } else if (errorInfo.includes("invalid-credential") || errorInfo.includes("invalid-login")) {
+        // invalid-credential = EEP still enabled OR wrong password
+        // Try fetchSignInMethodsForEmail
         try {
+          console.log("Trying fetchSignInMethodsForEmail for:", email);
           const methods = await fetchSignInMethodsForEmail(auth, email);
+          console.log("Methods returned:", methods);
           if (methods.length === 0) {
             setError("Don't have an account? Sign up.");
           } else {
             setError("Incorrect password. Try again.");
           }
-        } catch {
-          // If check fails, just say incorrect
-          setError("Incorrect email or password.");
+        } catch (checkErr) {
+          console.error("fetchSignInMethodsForEmail error:", checkErr);
+          // Last resort: check Firestore for this email
+          try {
+            const { collection, query, where, limit, getDocs } = await import("firebase/firestore");
+            const { db } = await import("@/lib/firebase");
+            const q = query(collection(db, "customers"), where("assignedTo", "==", email.toLowerCase()), limit(1));
+            const snap = await getDocs(q);
+            if (snap.empty) {
+              setError("Don't have an account? Sign up.");
+            } else {
+              setError("Incorrect password. Try again.");
+            }
+          } catch {
+            setError("Incorrect email or password.");
+          }
         }
+      } else {
+        setError("Incorrect email or password.");
       }
     } finally {
       setLoading(false);
