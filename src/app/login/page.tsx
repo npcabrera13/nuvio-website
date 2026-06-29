@@ -42,14 +42,14 @@ function LoginContent() {
       if (errorInfo.includes("too-many-requests")) {
         setError("Too many attempts. Please try again later.");
       } else if (errorInfo.includes("user-not-found")) {
-        setError("__LINK__The email you entered isn't connected to an account. Sign up__END__");
+        setError("__SIGNUP_LINK__The email you entered isn't connected to an account. Sign up__SIGNUP_END__");
       } else if (errorInfo.includes("wrong-password")) {
         setError("Incorrect password. Try again.");
       } else if (errorInfo.includes("invalid-credential") || errorInfo.includes("invalid-login")) {
         try {
           const methods = await fetchSignInMethodsForEmail(auth, email);
           if (methods.length === 0) {
-            setError("__LINK__The email you entered isn't connected to an account. Sign up__END__");
+            setError("__SIGNUP_LINK__The email you entered isn't connected to an account. Sign up__SIGNUP_END__");
           } else {
             setError("Incorrect password. Try again.");
           }
@@ -60,7 +60,7 @@ function LoginContent() {
             const q = query(collection(db, "customers"), where("assignedTo", "==", email.toLowerCase()), limit(1));
             const snap = await getDocs(q);
             if (snap.empty) {
-              setError("__LINK__The email you entered isn't connected to an account. Sign up__END__");
+              setError("__SIGNUP_LINK__The email you entered isn't connected to an account. Sign up__SIGNUP_END__");
             } else {
               setError("Incorrect password. Try again.");
             }
@@ -121,9 +121,9 @@ function LoginContent() {
             <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300" role="alert">
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
               <span>
-                {error.includes("__LINK__") ? (
+                {error.includes("__SIGNUP_LINK__") ? (
                   <>
-                    {error.replace("__LINK__", "").replace("__END__", "").replace("Sign up", "")}
+                    {error.replace("__SIGNUP_LINK__", "").replace("__SIGNUP_END__", "").replace("Sign up", "")}
                     <Link href="/signup" className="text-violet-400 hover:text-violet-300 font-semibold underline">Sign up</Link>
                   </>
                 ) : (
