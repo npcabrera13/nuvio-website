@@ -90,10 +90,17 @@ const PLANS = [
 ];
 
 function RenewalHero({ isExpired }: { isExpired: boolean }) {
-  const [selected, setSelected] = useState(1); // default to 1 month (middle, most popular)
+  const [selected, setSelected] = useState(1);
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState("");
   const plan = PLANS[selected];
+
+  // Reset payLoading when page is restored from bfcache (user pressed back from PayMongo)
+  useEffect(() => {
+    const handlePageShow = () => setPayLoading(false);
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
 
   return (
     <div className="relative overflow-hidden rounded-2xl mb-5">
@@ -675,13 +682,11 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
           </div>
         )}
 
-        {/* ─── QUICK ACTIONS ─── */}
-        <div className="grid grid-cols-1 gap-2 mb-5">
-          <a href="https://nuvio.tv" target="_blank" rel="noopener noreferrer" className="nuvio-gradient-bg rounded-xl p-3 flex items-center justify-center gap-2 transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-violet-900/20">
-            <Play className="h-5 w-5 text-white" />
-            <span className="text-xs font-bold text-white">Go to nuvio.tv</span>
-          </a>
-        </div>
+        {/* ─── GO TO NUVIO.TV (prominent) ─── */}
+        <a href="https://nuvio.tv" target="_blank" rel="noopener noreferrer" className="nuvio-gradient-bg rounded-2xl p-4 flex items-center justify-center gap-3 transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-violet-900/30 mb-5 animate-pulse-slow">
+          <Play className="h-6 w-6 text-white fill-current" />
+          <span className="text-base font-extrabold text-white">Go to nuvio.tv →</span>
+        </a>
 
         {/* ─── LIVE CHANNELS ─── */}
         <div className="mb-5">

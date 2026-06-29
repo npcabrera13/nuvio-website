@@ -273,14 +273,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     const cred = await signInWithPopup(auth, provider);
 
-    // New Google user (no displayName = no token assigned yet)
-    // Google emails are pre-verified by Google, so assign immediately
-    if (!cred.user.displayName) {
-      await assignTokenToUser(cred.user, cred.user.email);
-      return { needsVerification: false };
+    // Check if user already has a valid token (displayName starts with "nuvio_")
+    // Google sets displayName to the user's real name, so we can't just check if it's null
+    const hasToken = cred.user.displayName && cred.user.displayName.startsWith("nuvio_");
+
+    if (!hasToken) {
+      // No valid token — assign one (Google emails are pre-verified)
+      try {
+        await assignTokenToUser(cred.user, cred.user.email);
+      } catch (err) {
+        // If accounts are full, they'll see the pay screen
+        console.error("Failed to assign token for Google user:", err);
+      }
     }
 
-    // Existing user — fetchProfile will read their token
     return { needsVerification: false };
   }, []);
 

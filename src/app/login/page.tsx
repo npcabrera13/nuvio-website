@@ -35,15 +35,13 @@ function LoginContent() {
       // If there's a redirect (from /verify), go there. Otherwise dashboard.
       router.push(redirect || "/dashboard");
     } catch (err: unknown) {
+      const errorCode = (err as { code?: string })?.code || "";
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.includes("invalid-credential") || msg.includes("wrong-password")) {
-        setError("Incorrect email or password.");
-      } else if (msg.includes("user-not-found")) {
-        setError("No account found with this email. Try signing up.");
-      } else if (msg.includes("too-many-requests")) {
+      const combined = `${errorCode} ${msg}`.toLowerCase();
+      if (combined.includes("too-many-requests")) {
         setError("Too many attempts. Please try again later.");
       } else {
-        setError(msg || "Failed to log in. Please try again.");
+        setError("Incorrect email or password.");
       }
     } finally {
       setLoading(false);
