@@ -73,7 +73,7 @@ export default function SignupPage() {
       if (msg === ACCOUNTS_FULL_ERROR) {
         setAccountsFull(true);
       } else if (msg.includes("email-already-in-use")) {
-        setError("An account with this email already exists. Try logging in.");
+        setError("__LINK__An account with this email already exists. Log in__END__");
       } else if (msg.includes("invalid-email")) {
         setError("Please enter a valid email address.");
       } else if (msg.includes("weak-password")) {
@@ -224,7 +224,16 @@ export default function SignupPage() {
           {error && (
             <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300" role="alert">
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>{error}</span>
+              <span>
+                {error.includes("__LINK__") ? (
+                  <>
+                    {error.replace("__LINK__", "").replace("__END__", "").replace("Log in", "")}
+                    <Link href="/login" className="text-violet-400 hover:text-violet-300 font-semibold underline">Log in</Link>
+                  </>
+                ) : (
+                  error
+                )}
+              </span>
             </div>
           )}
 
