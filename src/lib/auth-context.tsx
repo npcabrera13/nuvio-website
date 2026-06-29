@@ -50,6 +50,7 @@ interface AuthContextValue {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
+  profileLoading: boolean;
   signup: (email: string, password: string) => Promise<{ needsVerification: boolean }>;
   login: (email: string, password: string) => Promise<void>;
   loginWithGoogle: () => Promise<{ needsVerification: boolean }>;
@@ -156,8 +157,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const fetchProfile = useCallback(async (firebaseUser: User) => {
+    setProfileLoading(true);
     // Read customers/{user.displayName} — 1 read, no queries
     const tokenId = firebaseUser.displayName;
     if (!tokenId) {
@@ -186,6 +189,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error("Failed to fetch profile:", err);
       setProfile(null);
+    } finally {
+      setProfileLoading(false);
     }
   }, []);
 
@@ -296,7 +301,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, loading, signup, login, loginWithGoogle, signOut, refreshProfile, completeVerification, assignTokenAfterPayment }}
+      value={{ user, profile, loading, profileLoading, signup, login, loginWithGoogle, signOut, refreshProfile, completeVerification, assignTokenAfterPayment }}
     >
       {children}
     </AuthContext.Provider>

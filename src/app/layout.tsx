@@ -25,22 +25,22 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Nuvio" }],
   icons: {
-    icon: "https://i.ibb.co/J91qPG0/Logo-1080x1080.png",
+    icon: "https://nuvio.tv/assets/Logo_1080x1080.png",
+    apple: "https://nuvio.tv/assets/Logo_1080x1080.png",
   },
   openGraph: {
     title: "Nuvio — All your streaming. One app.",
     description: "Netflix + Disney+ + HBO + live channels. ₱49/month. 7 days free.",
     siteName: "Nuvio",
     type: "website",
-    images: ["https://i.ibb.co/J91qPG0/Logo-1080x1080.png"],
+    images: ["https://nuvio.tv/assets/Logo_1080x1080.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "Nuvio — All your streaming. One app.",
     description: "₱49/month. 7 days free, no credit card.",
-    images: ["https://i.ibb.co/J91qPG0/Logo-1080x1080.png"],
+    images: ["https://nuvio.tv/assets/Logo_1080x1080.png"],
   },
-  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {
