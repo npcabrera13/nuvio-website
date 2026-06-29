@@ -184,8 +184,11 @@ export default function SignupPage() {
             <CheckCircle className="h-8 w-8 text-green-400" />
           </div>
           <h1 className="text-2xl font-bold mb-2">Check your inbox</h1>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-sm text-muted-foreground mb-3">
             We sent a verification link to <span className="font-semibold text-foreground">{email}</span>. Click it to unlock your 7-day free trial.
+          </p>
+          <p className="text-xs text-amber-400 mb-6 font-medium">
+            ⚠️ Don&apos;t see it? Check your spam/junk folder.
           </p>
           <Link
             href="/login"

@@ -518,6 +518,9 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
             <p className="text-sm text-muted-foreground">
               Pick a plan below to get instant access. Or verify your email for a 7-day free trial.
             </p>
+            <p className="text-xs text-amber-400 mt-2 font-medium">
+              ⚠️ Don&apos;t see the email? Check your spam/junk folder.
+            </p>
           </div>
           <RenewalHero isExpired={true} hasExistingToken={false} />
           <div className="text-center mt-3">
