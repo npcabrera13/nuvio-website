@@ -204,7 +204,7 @@ export default function SignupPage() {
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
             <img
-              src="https://i.ibb.co/J91qPG0/Logo-1080x1080.png"
+              src="https://nuvio.tv/assets/Logo_1080x1080.png"
               alt="Nuvio"
               width={40}
               height={44}

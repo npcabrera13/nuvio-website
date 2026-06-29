@@ -56,7 +56,7 @@ const jsonLd = {
   description:
     "All-in-one streaming app bundling movies, series, anime, and live channels. From ₱49/month with a 7-day free trial.",
   brand: { "@type": "Brand", name: "Nuvio" },
-  logo: "https://i.ibb.co/J91qPG0/Logo-1080x1080.png",
+  logo: "https://nuvio.tv/assets/Logo_1080x1080.png",
   offers: {
     "@type": "Offer",
     priceCurrency: "PHP",

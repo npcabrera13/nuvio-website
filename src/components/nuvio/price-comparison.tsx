@@ -95,7 +95,7 @@ export function PriceComparison() {
             <div className="relative">
               <div className="flex items-center justify-center gap-2.5">
                 <img
-                  src="https://i.ibb.co/J91qPG0/Logo-1080x1080.png"
+                  src="https://nuvio.tv/assets/Logo_1080x1080.png"
                   alt="Nuvio"
                   width={25}
                   height={28}
