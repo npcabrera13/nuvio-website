@@ -38,36 +38,29 @@ function LoginContent() {
       const errorCode = (err as { code?: string })?.code || "";
       const msg = err instanceof Error ? err.message : String(err);
       const errorInfo = `${errorCode} ${msg}`.toLowerCase();
-      console.log("Login error:", { errorCode, msg, errorInfo });
 
       if (errorInfo.includes("too-many-requests")) {
         setError("Too many attempts. Please try again later.");
       } else if (errorInfo.includes("user-not-found")) {
-        setError("Don't have an account? Sign up.");
+        setError("__LINK__The email you entered isn't connected to an account. Sign up__END__");
       } else if (errorInfo.includes("wrong-password")) {
         setError("Incorrect password. Try again.");
       } else if (errorInfo.includes("invalid-credential") || errorInfo.includes("invalid-login")) {
-        // invalid-credential = EEP still enabled OR wrong password
-        // Try fetchSignInMethodsForEmail
         try {
-          console.log("Trying fetchSignInMethodsForEmail for:", email);
           const methods = await fetchSignInMethodsForEmail(auth, email);
-          console.log("Methods returned:", methods);
           if (methods.length === 0) {
-            setError("Don't have an account? Sign up.");
+            setError("__LINK__The email you entered isn't connected to an account. Sign up__END__");
           } else {
             setError("Incorrect password. Try again.");
           }
-        } catch (checkErr) {
-          console.error("fetchSignInMethodsForEmail error:", checkErr);
-          // Last resort: check Firestore for this email
+        } catch {
           try {
             const { collection, query, where, limit, getDocs } = await import("firebase/firestore");
             const { db } = await import("@/lib/firebase");
             const q = query(collection(db, "customers"), where("assignedTo", "==", email.toLowerCase()), limit(1));
             const snap = await getDocs(q);
             if (snap.empty) {
-              setError("Don't have an account? Sign up.");
+              setError("__LINK__The email you entered isn't connected to an account. Sign up__END__");
             } else {
               setError("Incorrect password. Try again.");
             }
@@ -127,7 +120,16 @@ function LoginContent() {
           {error && (
             <div className="mb-4 flex items-start gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-300" role="alert">
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-              <span>{error}</span>
+              <span>
+                {error.includes("__LINK__") ? (
+                  <>
+                    {error.replace("__LINK__", "").replace("__END__", "").replace("Sign up", "")}
+                    <Link href="/signup" className="text-violet-400 hover:text-violet-300 font-semibold underline">Sign up</Link>
+                  </>
+                ) : (
+                  error
+                )}
+              </span>
             </div>
           )}
 
