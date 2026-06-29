@@ -41,7 +41,7 @@ function LoginContent() {
       if (combined.includes("too-many-requests")) {
         setError("Too many attempts. Please try again later.");
       } else {
-        setError("Incorrect email or password.");
+        setError("Incorrect email or password. Don't have an account? Sign up.");
       }
     } finally {
       setLoading(false);

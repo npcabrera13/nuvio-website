@@ -89,7 +89,7 @@ const PLANS = [
   { id: "3", days: 3, price: 19, label: "3 days", color: "from-emerald-500 to-teal-500", popular: false },
 ];
 
-function RenewalHero({ isExpired }: { isExpired: boolean }) {
+function RenewalHero({ isExpired, hasExistingToken }: { isExpired: boolean; hasExistingToken?: boolean }) {
   const [selected, setSelected] = useState(1);
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState("");
@@ -159,20 +159,23 @@ function RenewalHero({ isExpired }: { isExpired: boolean }) {
             setPayError("");
 
             // CRITICAL: Check if accounts are available BEFORE starting payment
-            // Don't let users pay if there's no account to assign them
-            try {
-              const checkRes = await fetch("/api/check-accounts", {
-                method: "GET",
-                headers: { "Content-Type": "application/json" },
-              });
-              const checkData = await checkRes.json();
-              if (!checkData.available) {
-                setPayError("All Nuvio accounts are currently taken. Please check back later.");
-                setPayLoading(false);
-                return;
+            // BUT only if the user has no existing token (new assignment)
+            // If user already has a token (renewal), skip the check
+            if (!hasExistingToken) {
+              try {
+                const checkRes = await fetch("/api/check-accounts", {
+                  method: "GET",
+                  headers: { "Content-Type": "application/json" },
+                });
+                const checkData = await checkRes.json();
+                if (!checkData.available) {
+                  setPayError("All Nuvio accounts are currently taken. Please check back later.");
+                  setPayLoading(false);
+                  return;
+                }
+              } catch {
+                // If check fails, proceed with payment (better to try than block)
               }
-            } catch {
-              // If check fails, proceed with payment (better to try than block)
             }
 
             try {
@@ -490,30 +493,37 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
     }
   }, [loading, user, router]);
 
-  if (loading || !user) {
+  if (loading || !user || profileLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-violet-400" /></div>;
   }
 
-  // User is logged in but has NO token assigned (displayName is empty).
-  // Check emailVerified to decide: verify gate vs pay screen
+  // User is logged in but has NO token assigned (displayName is empty or "verified-no-trial").
+  // ALWAYS show the pay screen — no verify gate.
+  // The verification email is still sent on signup, but the dashboard doesn't block them.
+  // If they pay, they get a token (paying proves they're real).
+  // If they verify first, they get a free trial token.
   if (!user.displayName || user.displayName === "verified-no-trial") {
-    const emailVerified = (user as any).emailVerified === true;
-    if (!emailVerified) {
-      // Not verified → show verify gate
-      return (
-        <main className="min-h-screen flex items-center justify-center px-4 py-20">
-          <div className="nuvio-solid-card rounded-2xl p-6 max-w-md text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/15 mb-4">
-              <Mail className="h-7 w-7 text-amber-400" />
+    return (
+      <main className="min-h-screen pt-20 pb-12 px-3 sm:px-4 lg:px-6 relative">
+        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -left-40 h-[30rem] w-[30rem] rounded-full bg-violet-600/12 blur-[140px] animate-float" />
+          <div className="absolute top-1/3 -right-40 h-[26rem] w-[26rem] rounded-full bg-pink-500/10 blur-[140px] animate-float-slow" />
+        </div>
+        <div className="mx-auto max-w-2xl">
+          <div className="text-center mb-5">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-violet-500/15 mb-4">
+              <Sparkles className="h-7 w-7 text-violet-400" />
             </div>
-            <h1 className="text-xl font-bold mb-2">Verify your email</h1>
-            <p className="text-sm text-muted-foreground mb-5">
-              We sent a verification link to <span className="font-semibold text-foreground">{user.email}</span>.
-              Click it to claim your Nuvio account.
+            <h1 className="text-xl sm:text-2xl font-bold mb-2">Welcome to Nuvio</h1>
+            <p className="text-sm text-muted-foreground">
+              Pick a plan below to get instant access. Or verify your email for a 7-day free trial.
             </p>
+          </div>
+          <RenewalHero isExpired={true} hasExistingToken={false} />
+          <div className="text-center mt-3">
             <button
               onClick={async () => {
-                const btn = document.getElementById("resend-btn");
+                const btn = document.getElementById("resend-btn-2");
                 if (btn) { btn.textContent = "Sending…"; btn.setAttribute("disabled", "true"); }
                 try {
                   const res = await fetch("/api/send-verification", {
@@ -523,73 +533,20 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
                   });
                   const data = await res.json();
                   if (btn) {
-                    btn.textContent = data.success ? "Email sent! Check your inbox" : "Failed to send";
-                    setTimeout(() => { if (btn) { btn.textContent = "Resend email"; btn.removeAttribute("disabled"); } }, 3000);
+                    btn.textContent = data.success ? "Email sent!" : "Failed";
+                    setTimeout(() => { if (btn) { btn.textContent = "Resend verification email"; btn.removeAttribute("disabled"); } }, 3000);
                   }
                 } catch {
-                  if (btn) { btn.textContent = "Failed to send"; setTimeout(() => { if (btn) { btn.textContent = "Resend email"; btn.removeAttribute("disabled"); } }, 3000); }
+                  if (btn) { btn.textContent = "Failed"; setTimeout(() => { if (btn) { btn.textContent = "Resend verification email"; btn.removeAttribute("disabled"); } }, 3000); }
                 }
               }}
-              id="resend-btn"
-              className="inline-flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-sm font-semibold hover:bg-white/[0.06] transition"
+              id="resend-btn-2"
+              className="text-xs text-violet-400 hover:text-violet-300 font-medium transition"
             >
-              Resend email
+              Resend verification email
             </button>
-            <button onClick={signOut} className="mt-3 block w-full text-center text-xs text-muted-foreground hover:text-foreground">Log out</button>
           </div>
-        </main>
-      );
-    } else {
-      // Email IS verified but no token → show pay screen
-      return (
-        <main className="min-h-screen pt-20 pb-12 px-3 sm:px-4 lg:px-6 relative">
-          <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-            <div className="absolute -top-40 -left-40 h-[30rem] w-[30rem] rounded-full bg-violet-600/12 blur-[140px] animate-float" />
-            <div className="absolute top-1/3 -right-40 h-[26rem] w-[26rem] rounded-full bg-pink-500/10 blur-[140px] animate-float-slow" />
-          </div>
-          <div className="mx-auto max-w-2xl">
-            <div className="text-center mb-5">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-500/15 mb-4">
-                <CheckCircle2 className="h-7 w-7 text-green-400" />
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold mb-2">Choose a plan</h1>
-              <p className="text-sm text-muted-foreground">
-                Pick a plan below to get instant access to a Nuvio account.
-              </p>
-            </div>
-            <RenewalHero isExpired={true} />
-            <div className="text-center mt-5">
-              <button onClick={signOut} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition">
-                <LogOut className="h-3 w-3" /> Log out
-              </button>
-            </div>
-          </div>
-        </main>
-      );
-    }
-  }
-
-  // User verified their email but already used their free trial.
-  // Show them the plans so they can pay to get access.
-  if (user.displayName === "verified-no-trial") {
-    return (
-      <main className="min-h-screen pt-20 pb-12 px-3 sm:px-4 lg:px-6 relative">
-        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -left-40 h-[30rem] w-[30rem] rounded-full bg-violet-600/12 blur-[140px] animate-float" />
-          <div className="absolute top-1/3 -right-40 h-[26rem] w-[26rem] rounded-full bg-pink-500/10 blur-[140px] animate-float-slow" />
-        </div>
-        <div className="mx-auto max-w-2xl">
-          <div className="text-center mb-5">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-green-500/15 mb-4">
-              <CheckCircle2 className="h-7 w-7 text-green-400" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold mb-2">Email verified!</h1>
-            <p className="text-sm text-muted-foreground">
-              You&apos;ve already used your 7-day free trial. Choose a plan below to start streaming.
-            </p>
-          </div>
-          <RenewalHero isExpired={true} />
-          <div className="text-center mt-5">
+          <div className="text-center mt-3">
             <button onClick={signOut} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition">
               <LogOut className="h-3 w-3" /> Log out
             </button>
@@ -618,7 +575,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
               Pick a plan below to get instant access to a Nuvio account.
             </p>
           </div>
-          <RenewalHero isExpired={true} />
+          <RenewalHero isExpired={true} hasExistingToken={false} />
           <div className="text-center mt-5">
             <button onClick={signOut} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition">
               <LogOut className="h-3 w-3" /> Log out
@@ -699,7 +656,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
         </div>
 
         {/* ─── ROW 2: RENEWAL HERO (front and center!) ─── */}
-        <RenewalHero isExpired={isExpired} />
+        <RenewalHero isExpired={isExpired} hasExistingToken={true} />
 
         {/* ─── NUVIO CREDENTIALS (right below payment options, easy to find) ─── */}
         <div className="nuvio-solid-card rounded-2xl p-4 sm:p-5 mb-4">
@@ -744,10 +701,13 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
           </div>
         )}
 
-        {/* ─── GO TO NUVIO.TV (prominent) ─── */}
-        <a href="https://nuvio.tv" target="_blank" rel="noopener noreferrer" className="nuvio-gradient-bg rounded-2xl p-4 flex items-center justify-center gap-3 transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-violet-900/30 mb-5 animate-pulse-slow">
-          <Play className="h-6 w-6 text-white fill-current" />
-          <span className="text-base font-extrabold text-white">Go to nuvio.tv →</span>
+        {/* ─── GO TO NUVIO.TV (prominent with logo) ─── */}
+        <a href="https://nuvio.tv" target="_blank" rel="noopener noreferrer" className="relative overflow-hidden rounded-2xl p-5 flex items-center justify-center gap-4 transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-violet-900/40 mb-5 animate-pulse-slow" style={{ background: "linear-gradient(135deg, #7c3aed, #ec4899)" }}>
+          <img src="https://nuvio.tv/assets/Logo_1080x1080.png" alt="Nuvio" className="h-10 w-10 rounded-lg shrink-0" />
+          <div className="text-center">
+            <span className="block text-lg font-extrabold text-white">Go to nuvio.tv</span>
+            <span className="block text-[10px] text-white/70">Start streaming now →</span>
+          </div>
         </a>
 
         {/* ─── LIVE CHANNELS ─── */}
