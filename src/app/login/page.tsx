@@ -37,9 +37,9 @@ function LoginContent() {
     } catch (err: unknown) {
       const errorCode = (err as { code?: string })?.code || "";
       const msg = err instanceof Error ? err.message : String(err);
-      const combined = `${errorCode} ${msg}`.toLowerCase();
+      const errorInfo = `${errorCode} ${msg}`.toLowerCase();
 
-      if (combined.includes("too-many-requests")) {
+      if (errorInfo.includes("too-many-requests")) {
         setError("Too many attempts. Please try again later.");
       } else {
         // Check if the account actually exists using fetchSignInMethodsForEmail
