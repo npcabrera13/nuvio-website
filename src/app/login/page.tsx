@@ -41,20 +41,22 @@ function LoginContent() {
 
       if (errorInfo.includes("too-many-requests")) {
         setError("Too many attempts. Please try again later.");
+      } else if (errorInfo.includes("user-not-found")) {
+        setError("Don't have an account? Sign up.");
+      } else if (errorInfo.includes("wrong-password")) {
+        setError("Incorrect password. Try again.");
       } else {
-        // Check if the account actually exists using fetchSignInMethodsForEmail
-        // NOTE: This requires "Email Enumeration Protection" to be DISABLED in
-        // Firebase Console → Authentication → Settings → User Actions
+        // invalid-credential — could be wrong password OR user not found
+        // Try fetchSignInMethodsForEmail to distinguish
         try {
           const methods = await fetchSignInMethodsForEmail(auth, email);
           if (methods.length === 0) {
-            // Account doesn't exist
             setError("Don't have an account? Sign up.");
           } else {
-            // Account exists → wrong password
             setError("Incorrect password. Try again.");
           }
         } catch {
+          // If check fails, just say incorrect
           setError("Incorrect email or password.");
         }
       }
