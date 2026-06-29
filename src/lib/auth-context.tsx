@@ -9,6 +9,9 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   updateProfile,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  reload,
   type User,
 } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
@@ -59,7 +62,11 @@ interface AuthContextValue {
   /** Assigns a Nuvio account to the current user. Called after email verification. */
   completeVerification: (skipTrial?: boolean) => Promise<void>;
   /** Assigns a token after payment (for users who didn't get a free trial). */
-  assignTokenAfterPayment: () => Promise<void>;
+  assignTokenAfterPayment: (days?: number) => Promise<void>;
+  /** Sends a password reset email */
+  resetPassword: (email: string) => Promise<void>;
+  /** Resends the verification email */
+  resendVerificationEmail: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -161,6 +168,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = useCallback(async (firebaseUser: User) => {
     setIsProfileLoading(true);
+    // Reload user to get latest emailVerified status
+    try { await reload(firebaseUser); } catch {}
+
     const tokenId = firebaseUser.displayName;
     if (!tokenId || tokenId === "verified-no-trial") {
       setProfile(null);
@@ -225,18 +235,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signup = useCallback(
     async (email: string, password: string) => {
-      // Create Firebase Auth user — NO Firestore writes, NO token assigned yet.
-      // The Nuvio account will only be assigned when they verify their email.
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       const isAdmin = ADMIN_EMAILS.includes(email.toLowerCase());
 
       if (isAdmin) {
-        // Admin: assign token immediately, skip email verification
         await assignTokenToUser(cred.user, cred.user.email);
         return { needsVerification: false };
       }
 
-      // Regular user: send verification email (no token assigned)
+      // Regular user: send BOTH emails
+      // 1. Firebase verification (sets emailVerified flag, provides redirect)
+      try {
+        const continueUrl = typeof window !== "undefined"
+          ? `${window.location.origin}/verify-callback`
+          : "https://nuviotv.pages.dev/verify-callback";
+        await sendEmailVerification(cred.user, {
+          url: continueUrl,
+          handleCodeInApp: false,
+        });
+      } catch (err) {
+        console.error("Firebase verification email failed:", err);
+      }
+
+      // 2. Custom branded email (nice design via worker-mailer)
       try {
         await fetch("/api/send-verification", {
           method: "POST",
@@ -247,7 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }),
         });
       } catch (err) {
-        console.error("Failed to send verification email:", err);
+        console.error("Custom verification email failed:", err);
       }
       return { needsVerification: true };
     },
@@ -307,13 +328,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { needsVerification: false };
   }, []);
 
+  const resetPassword = useCallback(async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  }, []);
+
+  const resendVerificationEmail = useCallback(async () => {
+    if (!user) throw new Error("Must be logged in");
+    await reload(user);
+    if (user.emailVerified) {
+      throw new Error("already-verified");
+    }
+    // Send Firebase verification
+    try {
+      const continueUrl = typeof window !== "undefined"
+        ? `${window.location.origin}/verify-callback`
+        : "https://nuviotv.pages.dev/verify-callback";
+      await sendEmailVerification(user, {
+        url: continueUrl,
+        handleCodeInApp: false,
+      });
+    } catch (err) {
+      console.error("Firebase email failed:", err);
+    }
+    // Also send custom branded email
+    try {
+      await fetch("/api/send-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email, uid: user.uid }),
+      });
+    } catch (err) {
+      console.error("Custom email failed:", err);
+    }
+  }, [user]);
+
   const signOut = useCallback(async () => {
     await firebaseSignOut(auth);
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, loading, profileLoading: isProfileLoading, signup, login, loginWithGoogle, signOut, refreshProfile, completeVerification, assignTokenAfterPayment }}
+      value={{ user, profile, loading, profileLoading: isProfileLoading, signup, login, loginWithGoogle, signOut, refreshProfile, completeVerification, assignTokenAfterPayment, resetPassword, resendVerificationEmail }}
     >
       {children}
     </AuthContext.Provider>

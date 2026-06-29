@@ -409,7 +409,7 @@ function CopyField({ label, value, icon: Icon }: { label: string; value: string;
 
 export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; series: NuvioMovie[] }) {
   const router = useRouter();
-  const { user, profile, loading, profileLoading: isProfileStillLoading, signOut, refreshProfile, assignTokenAfterPayment } = useAuth();
+  const { user, profile, loading, profileLoading: isProfileStillLoading, signOut, refreshProfile, assignTokenAfterPayment, resendVerificationEmail } = useAuth();
   const redirected = useRef(false);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [copiedBoth, setCopiedBoth] = useState(false);
@@ -540,18 +540,20 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
                 const btn = document.getElementById("resend-btn-2");
                 if (btn) { btn.textContent = "Sending…"; btn.setAttribute("disabled", "true"); }
                 try {
-                  const res = await fetch("/api/send-verification", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email: user.email, uid: user.uid }),
-                  });
-                  const data = await res.json();
+                  await resendVerificationEmail();
                   if (btn) {
-                    btn.textContent = data.success ? "Email sent!" : "Failed";
+                    btn.textContent = "Email sent! Check inbox + spam";
                     setTimeout(() => { if (btn) { btn.textContent = "Resend verification email"; btn.removeAttribute("disabled"); } }, 3000);
                   }
-                } catch {
-                  if (btn) { btn.textContent = "Failed"; setTimeout(() => { if (btn) { btn.textContent = "Resend verification email"; btn.removeAttribute("disabled"); } }, 3000); }
+                } catch (err) {
+                  const msg = err instanceof Error ? err.message : "";
+                  if (msg === "already-verified" && btn) {
+                    btn.textContent = "Already verified! Reloading…";
+                    setTimeout(() => window.location.reload(), 1500);
+                  } else if (btn) {
+                    btn.textContent = "Failed";
+                    setTimeout(() => { if (btn) { btn.textContent = "Resend verification email"; btn.removeAttribute("disabled"); } }, 3000);
+                  }
                 }
               }}
               id="resend-btn-2"
