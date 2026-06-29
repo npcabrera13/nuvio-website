@@ -161,16 +161,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = useCallback(async (firebaseUser: User) => {
     setIsProfileLoading(true);
-    // Read customers/{user.displayName} — 1 read, no queries
     const tokenId = firebaseUser.displayName;
-    if (!tokenId) {
+    if (!tokenId || tokenId === "verified-no-trial") {
       setProfile(null);
+      setIsProfileLoading(false);
       return;
     }
     try {
       const snap = await getDoc(doc(db, "customers", tokenId));
       if (snap.exists()) {
         const data = snap.data();
+        const assignedTo = data.assignedTo;
+        const userEmail = firebaseUser.email?.toLowerCase();
+
+        // SECURITY: Only show profile if token is assigned to THIS user
+        // If admin unassigned (assignedTo = null/empty) → no profile
+        // If admin reassigned to someone else → no profile
+        if (!assignedTo || assignedTo.trim() === "" || assignedTo.toLowerCase() !== userEmail) {
+          setProfile(null);
+          setIsProfileLoading(false);
+          return;
+        }
+
         setProfile({
           uid: firebaseUser.uid,
           email: firebaseUser.email,

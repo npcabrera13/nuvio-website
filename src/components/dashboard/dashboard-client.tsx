@@ -158,23 +158,34 @@ function RenewalHero({ isExpired, hasExistingToken }: { isExpired: boolean; hasE
             setPayLoading(true);
             setPayError("");
 
-            // CRITICAL: Check if accounts are available BEFORE starting payment
-            // BUT only if the user has no existing token (new assignment)
-            // If user already has a token (renewal), skip the check
+            // Check if accounts are available BEFORE payment
+            // Use Firebase directly (not the broken check-accounts Function)
             if (!hasExistingToken) {
               try {
-                const checkRes = await fetch("/api/check-accounts", {
-                  method: "GET",
-                  headers: { "Content-Type": "application/json" },
+                const { collection, query, where, limit, getDocs } = await import("firebase/firestore");
+                const { db } = await import("@/lib/firebase");
+                const q = query(
+                  collection(db, "customers"),
+                  where("status", "==", "active"),
+                  limit(10)
+                );
+                const snap = await getDocs(q);
+                let available = false;
+                snap.forEach(docSnap => {
+                  const data = docSnap.data();
+                  const assignedTo = data.assignedTo;
+                  const hasCreds = data.nuvioEmail && data.nuvioEmail.trim() !== "";
+                  if ((!assignedTo || assignedTo === "") && hasCreds) {
+                    available = true;
+                  }
                 });
-                const checkData = await checkRes.json();
-                if (!checkData.available) {
+                if (!available) {
                   setPayError("All Nuvio accounts are currently taken. Please check back later.");
                   setPayLoading(false);
                   return;
                 }
               } catch {
-                // If check fails, proceed with payment (better to try than block)
+                // If check fails, proceed anyway
               }
             }
 
