@@ -67,6 +67,8 @@ interface AuthContextValue {
   resetPassword: (email: string) => Promise<void>;
   /** Resends the verification email */
   resendVerificationEmail: () => Promise<void>;
+  /** Redeems a promo code and assigns a token */
+  redeemPromoCode: (code: string) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -276,19 +278,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   /**
-   * Called from the /verify page AFTER the email link is clicked.
-   * If skipTrial is true (user already used their free trial), don't assign
-   * a token — set displayName to "verified-no-trial" so the dashboard knows
-   * to show the "pay to get access" screen instead of "verify your email".
+   * Called from /verify-callback AFTER the email link is clicked.
+   * NEW: Does NOT assign a token. Just reloads the user so emailVerified is updated.
+   * The user must pay or use a promo code to get an account.
    */
   const completeVerification = useCallback(async (skipTrial: boolean = false) => {
     if (!user) throw new Error("Must be logged in to complete verification");
-    if (!skipTrial) {
-      await assignTokenToUser(user, user.email);
-    } else {
-      // Mark as verified but no trial — dashboard shows "pay to get access"
-      await updateProfile(user, { displayName: "verified-no-trial" });
-    }
+    // Just reload — no token assignment. Dashboard shows "Choose a Plan".
     await fetchProfile(user);
   }, [user, fetchProfile]);
 
@@ -301,6 +297,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) throw new Error("Must be logged in");
     await assignTokenToUser(user, user.email, days);
     await fetchProfile(user);
+  }, [user, fetchProfile]);
+
+  /**
+   * Redeems a promo code and assigns a token with the promo's days.
+   * 1. Read promoCodes/{code} from Firestore
+   * 2. Validate: exists, status="active"
+   * 3. Check accounts available
+   * 4. Assign token + set expiry = now + promoCode.days
+   * 5. Mark promo code as used
+   */
+  const redeemPromoCode = useCallback(async (code: string): Promise<{ success: boolean; message: string }> => {
+    if (!user) throw new Error("Must be logged in");
+
+    const codeUpper = code.trim().toUpperCase();
+
+    // 1. Read promo code
+    const promoSnap = await getDoc(doc(db, "promoCodes", codeUpper));
+    if (!promoSnap.exists()) {
+      return { success: false, message: "Promo code is invalid." };
+    }
+
+    const promoData = promoSnap.data();
+    if (promoData.status === "used") {
+      return { success: false, message: "Promo code has already been redeemed." };
+    }
+
+    // 2. Check accounts available
+    const q = query(
+      collection(db, "customers"),
+      where("status", "==", "active"),
+      limit(10)
+    );
+    const snapshot = await getDocs(q);
+    let available = false;
+    for (const docSnap of snapshot.docs) {
+      const data = docSnap.data();
+      const assignedTo = data.assignedTo;
+      const hasCreds = data.nuvioEmail && data.nuvioEmail.trim() !== "";
+      if ((!assignedTo || assignedTo === "") && hasCreds) {
+        available = true;
+        break;
+      }
+    }
+    if (!available) {
+      return { success: false, message: "All Nuvio accounts are currently taken. Please check back later." };
+    }
+
+    // 3. Assign token with promo days
+    const promoDays = promoData.days || 7;
+    await assignTokenToUser(user, user.email, promoDays);
+
+    // 4. Mark promo code as used
+    await updateDoc(doc(db, "promoCodes", codeUpper), {
+      status: "used",
+      assignedTo: user.email?.toLowerCase() ?? "",
+      redeemedAt: Timestamp.now(),
+    });
+
+    // 5. Refresh profile
+    await fetchProfile(user);
+
+    return { success: true, message: `Promo code redeemed! ${promoDays} days added.` };
   }, [user, fetchProfile]);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -368,7 +426,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, loading, profileLoading: isProfileLoading, signup, login, loginWithGoogle, signOut, refreshProfile, completeVerification, assignTokenAfterPayment, resetPassword, resendVerificationEmail }}
+      value={{ user, profile, loading, profileLoading: isProfileLoading, signup, login, loginWithGoogle, signOut, refreshProfile, completeVerification, assignTokenAfterPayment, resetPassword, resendVerificationEmail, redeemPromoCode }}
     >
       {children}
     </AuthContext.Provider>

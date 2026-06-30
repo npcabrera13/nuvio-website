@@ -409,11 +409,14 @@ function CopyField({ label, value, icon: Icon }: { label: string; value: string;
 
 export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; series: NuvioMovie[] }) {
   const router = useRouter();
-  const { user, profile, loading, profileLoading: isProfileStillLoading, signOut, refreshProfile, assignTokenAfterPayment, resendVerificationEmail } = useAuth();
+  const { user, profile, loading, profileLoading: isProfileStillLoading, signOut, refreshProfile, assignTokenAfterPayment, resendVerificationEmail, redeemPromoCode } = useAuth();
   const redirected = useRef(false);
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [copiedBoth, setCopiedBoth] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"processing" | "success" | "failed" | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoMessage, setPromoMessage] = useState("");
 
   // Handle PayMongo payment redirect: /dashboard?payment=success&plan=30
   useEffect(() => {
@@ -508,12 +511,12 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-violet-400" /></div>;
   }
 
-  // User is logged in but has NO token assigned (displayName is empty or "verified-no-trial").
-  // ALWAYS show the pay screen — no verify gate.
-  // The verification email is still sent on signup, but the dashboard doesn't block them.
-  // If they pay, they get a token (paying proves they're real).
-  // If they verify first, they get a free trial token.
-  if (!user.displayName || user.displayName === "verified-no-trial") {
+  // UNIFIED "Choose a Plan" screen — shows for ALL cases where user has no active token:
+  // - No displayName (new user, hasn't verified)
+  // - displayName === "verified-no-trial"
+  // - No profile (deleted/unassigned/reassigned)
+  // - No profile.tokenId or profile.nuvioEmail
+  if (!user.displayName || user.displayName === "verified-no-trial" || !profile || !profile.tokenId || !profile.nuvioEmail) {
     return (
       <main className="min-h-screen pt-20 pb-12 px-3 sm:px-4 lg:px-6 relative">
         <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
@@ -525,16 +528,65 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-violet-500/15 mb-4">
               <Sparkles className="h-7 w-7 text-violet-400" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold mb-2">Welcome to Nuvio</h1>
+            <h1 className="text-xl sm:text-2xl font-bold mb-2">Choose a Plan</h1>
             <p className="text-sm text-muted-foreground">
-              Pick a plan below to get instant access. Or verify your email for a 7-day free trial.
+              Pick a plan below to get instant access to a Nuvio account.
             </p>
             <p className="text-xs text-amber-400 mt-2 font-medium">
               ⚠️ Don&apos;t see the email? Check your spam/junk folder.
             </p>
           </div>
+
+          {/* Pricing plans */}
           <RenewalHero isExpired={true} hasExistingToken={false} />
-          <div className="text-center mt-3">
+
+          {/* Promo code section */}
+          <div className="nuvio-solid-card rounded-2xl p-4 sm:p-5 mt-4">
+            <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+              <Gift className="h-4 w-4 text-pink-400" /> Have a promo code?
+            </h3>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value)}
+                placeholder="Enter promo code"
+                className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-500/40"
+                disabled={promoLoading}
+              />
+              <button
+                onClick={async () => {
+                  if (!promoCode.trim()) return;
+                  setPromoLoading(true);
+                  setPromoMessage("");
+                  try {
+                    const result = await redeemPromoCode(promoCode);
+                    setPromoMessage(result.message);
+                    if (result.success) {
+                      setPromoCode("");
+                      setTimeout(() => window.location.reload(), 1500);
+                    }
+                  } catch {
+                    setPromoMessage("Failed to redeem promo code. Try again.");
+                  } finally {
+                    setPromoLoading(false);
+                  }
+                }}
+                disabled={promoLoading || !promoCode.trim()}
+                className="nuvio-gradient-bg rounded-xl px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 active:scale-95 transition"
+              >
+                {promoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Redeem"}
+              </button>
+            </div>
+            {promoMessage && (
+              <p className={`mt-2 text-xs ${promoMessage.includes("redeemed") ? "text-green-400" : "text-red-400"}`}>
+                {promoMessage}
+              </p>
+            )}
+          </div>
+
+          {/* Resend verification + logout */}
+          <div className="text-center mt-4 space-y-2">
             <button
               onClick={async () => {
                 const btn = document.getElementById("resend-btn-2");
@@ -561,63 +613,12 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
             >
               Resend verification email
             </button>
-          </div>
-          <div className="text-center mt-3">
-            <button onClick={signOut} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition">
-              <LogOut className="h-3 w-3" /> Log out
-            </button>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  if (!profile) {
-    // Profile couldn't be loaded — token was deleted/unassigned/reassigned
-    // Show pay screen so user can get a new account
-    return (
-      <main className="min-h-screen pt-20 pb-12 px-3 sm:px-4 lg:px-6 relative">
-        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -left-40 h-[30rem] w-[30rem] rounded-full bg-violet-600/12 blur-[140px] animate-float" />
-          <div className="absolute top-1/3 -right-40 h-[26rem] w-[26rem] rounded-full bg-pink-500/10 blur-[140px] animate-float-slow" />
-        </div>
-        <div className="mx-auto max-w-2xl">
-          <div className="text-center mb-5">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/15 mb-4">
-              <Users className="h-7 w-7 text-amber-400" />
+            <div>
+              <button onClick={signOut} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition">
+                <LogOut className="h-3 w-3" /> Log out
+              </button>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold mb-2">Choose a plan</h1>
-            <p className="text-sm text-muted-foreground">
-              Pick a plan below to get instant access to a Nuvio account.
-            </p>
           </div>
-          <RenewalHero isExpired={true} hasExistingToken={false} />
-          <div className="text-center mt-5">
-            <button onClick={signOut} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition">
-              <LogOut className="h-3 w-3" /> Log out
-            </button>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  // No token assigned — accounts were full when they verified
-  if (!profile.tokenId || !profile.nuvioEmail) {
-    return (
-      <main className="min-h-screen flex items-center justify-center px-4 py-20">
-        <div className="nuvio-solid-card rounded-2xl p-6 max-w-md text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-500/15 mb-4">
-            <Users className="h-7 w-7 text-amber-400" />
-          </div>
-          <h1 className="text-xl font-bold mb-2">No account assigned yet</h1>
-          <p className="text-sm text-muted-foreground mb-5">
-            All Nuvio accounts are currently assigned to other users. New accounts are
-            added regularly — please check back soon.
-          </p>
-          <button onClick={signOut} className="inline-flex items-center justify-center rounded-xl nuvio-gradient-bg px-5 py-2.5 text-sm font-semibold text-white">
-            Log out
-          </button>
         </div>
       </main>
     );
