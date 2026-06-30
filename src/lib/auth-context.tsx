@@ -300,65 +300,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, fetchProfile]);
 
   /**
-   * Redeems a promo code and assigns a token with the promo's days.
-   * 1. Read promoCodes/{code} from Firestore
-   * 2. Validate: exists, status="active"
-   * 3. Check accounts available
-   * 4. Assign token + set expiry = now + promoCode.days
-   * 5. Mark promo code as used
+   * Redeems a promo code via the server-side /api/redeem endpoint.
+   * The endpoint atomically (Firestore transaction):
+   *   1. Validates the code exists in promoCodes/{code}
+   *   2. Rejects if this email already has an active subscription (anti-abuse)
+   *   3. Finds an available Nuvio account
+   *   4. Assigns it + sets expiry = now + promo.days + DELETES the code (single-use)
+   * This replaces the old client-side logic that had a race condition and only
+   * marked codes as "used" instead of deleting them.
    */
   const redeemPromoCode = useCallback(async (code: string): Promise<{ success: boolean; message: string }> => {
-    if (!user) throw new Error("Must be logged in");
+    if (!user || !user.email) throw new Error("Must be logged in");
 
     const codeUpper = code.trim().toUpperCase();
 
-    // 1. Read promo code
-    const promoSnap = await getDoc(doc(db, "promoCodes", codeUpper));
-    if (!promoSnap.exists()) {
-      return { success: false, message: "Promo code is invalid." };
-    }
+    try {
+      const res = await fetch("/api/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: codeUpper, email: user.email }),
+      });
+      const data = await res.json();
 
-    const promoData = promoSnap.data();
-    if (promoData.status === "used") {
-      return { success: false, message: "Promo code has already been redeemed." };
-    }
-
-    // 2. Check accounts available
-    const q = query(
-      collection(db, "customers"),
-      where("status", "==", "active"),
-      limit(10)
-    );
-    const snapshot = await getDocs(q);
-    let available = false;
-    for (const docSnap of snapshot.docs) {
-      const data = docSnap.data();
-      const assignedTo = data.assignedTo;
-      const hasCreds = data.nuvioEmail && data.nuvioEmail.trim() !== "";
-      if ((!assignedTo || assignedTo === "") && hasCreds) {
-        available = true;
-        break;
+      if (!data.ok) {
+        // Map server error codes → user-friendly messages.
+        const msg =
+          data.error === "invalid"        ? "Promo code is invalid." :
+          data.error === "no_accounts"    ? "All Nuvio accounts are currently taken. Please check back later." :
+          data.error === "already_active" ? "You already have an active subscription." :
+          data.error === "server"         ? "Server error. Please try again." :
+          "Promo code is invalid.";
+        return { success: false, message: msg };
       }
+
+      // Refresh profile so the dashboard picks up the newly-assigned token.
+      await fetchProfile(user);
+      const days = data.days || 7;
+      return { success: true, message: `Promo code redeemed! ${days} days added.` };
+    } catch (err) {
+      console.error("redeemPromoCode failed:", err);
+      return { success: false, message: "Network error. Please try again." };
     }
-    if (!available) {
-      return { success: false, message: "All Nuvio accounts are currently taken. Please check back later." };
-    }
-
-    // 3. Assign token with promo days
-    const promoDays = promoData.days || 7;
-    await assignTokenToUser(user, user.email, promoDays);
-
-    // 4. Mark promo code as used
-    await updateDoc(doc(db, "promoCodes", codeUpper), {
-      status: "used",
-      assignedTo: user.email?.toLowerCase() ?? "",
-      redeemedAt: Timestamp.now(),
-    });
-
-    // 5. Refresh profile
-    await fetchProfile(user);
-
-    return { success: true, message: `Promo code redeemed! ${promoDays} days added.` };
   }, [user, fetchProfile]);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -369,20 +351,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const provider = new GoogleAuthProvider();
     const cred = await signInWithPopup(auth, provider);
 
-    // Check if user already has a valid token (displayName starts with "nuvio_")
-    // Google sets displayName to the user's real name, so we can't just check if it's null
-    const hasToken = cred.user.displayName && cred.user.displayName.startsWith("nuvio_");
-
-    if (!hasToken) {
-      // No valid token — assign one (Google emails are pre-verified)
-      try {
-        await assignTokenToUser(cred.user, cred.user.email);
-      } catch (err) {
-        // If accounts are full, they'll see the pay screen
-        console.error("Failed to assign token for Google user:", err);
-      }
-    }
-
+    // Per the new flow: Google sign-in does NOT auto-assign a token.
+    // Google emails are considered verified, but the user still must
+    // either BUY a plan or REDEEM a promo code on the "Choose Plan"
+    // screen before a Nuvio account is assigned to them.
+    // (Previously this auto-assigned a 7-day trial — that was a bug.)
     return { needsVerification: false };
   }, []);
 
