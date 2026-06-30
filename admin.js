@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
     getFirestore, collection, getDocs,
-    doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp
+    doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ── Configuration ──────────────────────────────────────────────────────────
@@ -55,7 +55,6 @@ const statBlocked   = document.getElementById('stat-blocked');
 
 const bulkModal     = document.getElementById('bulk-modal');
 const bulkInput     = document.getElementById('bulk-input');
-const bulkDays      = document.getElementById('bulk-days');
 const bulkGenerateBtn = document.getElementById('bulk-generate-btn');
 
 const tokenModal    = document.getElementById('token-modal');
@@ -68,7 +67,6 @@ const modalNuvioPassword = document.getElementById('modal-nuvio-password');
 
 const modalTokenKey = document.getElementById('modal-token-key');
 const tokenKeyGroup = document.getElementById('token-key-group');
-const modalDays     = document.getElementById('modal-days');
 const daysGroup     = document.getElementById('days-group');
 const saveTokenBtn  = document.getElementById('save-token-btn');
 
@@ -102,7 +100,6 @@ document.querySelectorAll('.close-modal').forEach(btn => {
 
 document.getElementById('open-bulk-modal').addEventListener('click', () => {
     bulkInput.value = '';
-    bulkDays.value = '7';
     bulkModal.classList.remove('hidden');
 });
 
@@ -113,7 +110,6 @@ document.getElementById('open-create-modal').addEventListener('click', () => {
     modalNotes.value = '';
     modalNuvioEmail.value = '';
     modalNuvioPassword.value = '';
-    modalDays.value = '7';
     modalTokenKey.value = '';
     tokenKeyGroup.classList.add('hidden');
     daysGroup.classList.remove('hidden');
@@ -243,19 +239,13 @@ saveTokenBtn.addEventListener('click', async () => {
 
     try {
         if (!isEdit) {
-            // Create
-            const days = parseInt(modalDays.value, 10);
-            if (isNaN(days) || days < 1) throw new Error("Invalid days");
-            
+            // Create — no days field, no expiry (set when assigned)
             const randomId = "nuvio_" + Math.random().toString(36).substring(2, 9);
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + days);
 
             await setDoc(doc(db, "customers", randomId), {
                 name: nameVal,
                 status: 'active',
                 createdAt: serverTimestamp(),
-                expiresAt: expiresAt,
                 nuvioEmail: modalNuvioEmail.value.trim(),
                 nuvioPassword: modalNuvioPassword.value.trim(),
                 assignedTo: null
@@ -310,8 +300,6 @@ bulkGenerateBtn.addEventListener('click', async () => {
     if (!text) return showToast('❌ No input provided.');
     
     const lines = text.split('\n').filter(l => l.trim() !== '');
-    const days = parseInt(bulkDays.value, 10);
-    if (isNaN(days) || days < 1) return showToast('❌ Invalid days.');
     
     bulkGenerateBtn.disabled = true;
     bulkGenerateBtn.textContent = `Creating 0/${lines.length}...`;
@@ -330,14 +318,11 @@ bulkGenerateBtn.addEventListener('click', async () => {
         
         try {
             const randomId = "nuvio_" + Math.random().toString(36).substring(2, 9);
-            const expiresAt = new Date();
-            expiresAt.setDate(expiresAt.getDate() + days);
 
             await setDoc(doc(db, "customers", randomId), {
                 name: email,
                 status: 'active',
                 createdAt: serverTimestamp(),
-                expiresAt: expiresAt,
                 nuvioEmail: email,
                 nuvioPassword: pwd,
                 assignedTo: null
@@ -399,7 +384,6 @@ window.openRenewModal = (id, name, currentMs) => {
 // Add days button
 document.getElementById('renew-add-btn').addEventListener('click', async () => {
     const days = parseInt(document.getElementById('renew-days-input').value, 10);
-    if (isNaN(days) || days < 1) return showToast('❌ Invalid number of days.');
     
     let baseDate = pendingRenewCurrentExpiry ? new Date(pendingRenewCurrentExpiry) : new Date();
     if (baseDate.getTime() < Date.now()) baseDate = new Date();
@@ -418,7 +402,6 @@ document.getElementById('renew-add-btn').addEventListener('click', async () => {
 // Remove days button
 document.getElementById('renew-remove-btn').addEventListener('click', async () => {
     const days = parseInt(document.getElementById('renew-days-input').value, 10);
-    if (isNaN(days) || days < 1) return showToast('❌ Invalid number of days.');
     
     let baseDate = pendingRenewCurrentExpiry ? new Date(pendingRenewCurrentExpiry) : new Date();
     baseDate.setDate(baseDate.getDate() - days);
@@ -1071,3 +1054,112 @@ passwordInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') loginBtn.click();
 });
 window.openEditModal = openEditModal;
+
+// ── PROMO CODES ─────────────────────────────────────────────────────────────
+
+window.openPromoModal = async () => {
+    document.getElementById('promo-modal').classList.remove('hidden');
+    await loadPromoCodes();
+};
+
+document.getElementById('open-promo-modal')?.addEventListener('click', () => {
+    window.openPromoModal();
+});
+
+async function loadPromoCodes() {
+    const listEl = document.getElementById('promo-codes-list');
+    listEl.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:1rem;">Loading...</p>';
+    try {
+        const snapshot = await getDocs(collection(db, "promoCodes"));
+        if (snapshot.empty) {
+            listEl.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:1rem;">No promo codes yet. Generate one above!</p>';
+            return;
+        }
+        const codes = [];
+        snapshot.forEach(docSnap => {
+            codes.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        // Sort: active first, then by createdAt desc
+        codes.sort((a, b) => {
+            if (a.status === 'active' && b.status === 'used') return -1;
+            if (a.status === 'used' && b.status === 'active') return 1;
+            return 0;
+        });
+        listEl.innerHTML = codes.map(c => {
+            const status = c.status === 'used'
+                ? `<span class="status-badge status-blocked">Used by ${c.assignedTo || 'unknown'}</span>`
+                : `<span class="status-badge status-active">Active</span>`;
+            const redeemed = c.redeemedAt
+                ? `<div style="font-size:0.7rem; color:var(--text-muted); margin-top:0.25rem;">Redeemed: ${new Date(c.redeemedAt.toMillis ? c.redeemedAt.toMillis() : c.redeemedAt).toLocaleDateString()}</div>`
+                : '';
+            return `
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:0.75rem; border:1px solid var(--border); border-radius:0.5rem; margin-bottom:0.5rem; background:rgba(255,255,255,0.02);">
+                <div>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <code style="font-size:0.9rem; font-weight:600; color:#a78bfa;">${c.id}</code>
+                        ${status}
+                    </div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">${c.days || 7} days</div>
+                    ${redeemed}
+                </div>
+                <div style="display:flex; gap:0.25rem;">
+                    <button onclick="copyPromoCode('${c.id}')" class="btn-icon" title="Copy" style="width:32px; height:32px; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:6px; cursor:pointer; color:var(--text-muted);">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                    <button onclick="deletePromoCode('${c.id}')" class="btn-icon" title="Delete" style="width:32px; height:32px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.2); border-radius:6px; cursor:pointer; color:#ef4444;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                    </button>
+                </div>
+            </div>`;
+        }).join('');
+    } catch (err) {
+        listEl.innerHTML = '<p style="text-align:center; color:#ef4444; padding:1rem;">Failed to load promo codes.</p>';
+    }
+}
+
+window.copyPromoCode = (code) => {
+    navigator.clipboard.writeText(code);
+    showToast(`✅ Copied: ${code}`);
+};
+
+window.deletePromoCode = async (code) => {
+    if (!confirm(`Delete promo code "${code}"?`)) return;
+    try {
+        await deleteDoc(doc(db, "promoCodes", code));
+        showToast(`✅ Deleted: ${code}`);
+        loadPromoCodes();
+    } catch (e) {
+        showToast('❌ Failed to delete.');
+    }
+};
+
+document.getElementById('generate-promo-btn')?.addEventListener('click', async () => {
+    const days = parseInt(document.getElementById('promo-days-input').value) || 7;
+    const btn = document.getElementById('generate-promo-btn');
+    btn.disabled = true;
+    btn.textContent = 'Generating...';
+
+    // Generate random code: NUVRIO-XXXX-XXXX
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const part1 = Array.from({length:4}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+    const part2 = Array.from({length:4}, () => chars[Math.floor(Math.random()*chars.length)]).join('');
+    const code = `NUVRIO-${part1}-${part2}`;
+
+    try {
+        await setDoc(doc(db, "promoCodes", code), {
+            days: days,
+            status: 'active',
+            assignedTo: null,
+            redeemedAt: null,
+            createdAt: serverTimestamp(),
+        });
+        showToast(`✅ Generated: ${code}`);
+        document.getElementById('promo-days-input').value = '7';
+        loadPromoCodes();
+    } catch (e) {
+        showToast('❌ Failed to generate promo code.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Generate';
+    }
+});
