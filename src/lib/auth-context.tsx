@@ -173,32 +173,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Reload user to get latest emailVerified status
     try { await reload(firebaseUser); } catch {}
 
-    const tokenId = firebaseUser.displayName;
-    if (!tokenId || tokenId === "verified-no-trial") {
+    const userEmail = firebaseUser.email?.toLowerCase();
+    if (!userEmail) {
       setProfile(null);
       setIsProfileLoading(false);
       return;
     }
+
     try {
-      const snap = await getDoc(doc(db, "customers", tokenId));
-      if (snap.exists()) {
-        const data = snap.data();
-        const assignedTo = data.assignedTo;
-        const userEmail = firebaseUser.email?.toLowerCase();
+      const tokenId = firebaseUser.displayName;
+      let snap = null;
+      let tokenIdToLoad = null;
 
-        // SECURITY: Only show profile if token is assigned to THIS user
-        // If admin unassigned (assignedTo = null/empty) → no profile
-        // If admin reassigned to someone else → no profile
-        if (!assignedTo || assignedTo.trim() === "" || assignedTo.toLowerCase() !== userEmail) {
-          setProfile(null);
-          setIsProfileLoading(false);
-          return;
+      // 1. Try the saved link (displayName) first — fast path, 1 read.
+      if (tokenId && tokenId !== "verified-no-trial") {
+        snap = await getDoc(doc(db, "customers", tokenId));
+        if (snap.exists()) {
+          const data = snap.data();
+          const assignedTo = data.assignedTo;
+          // SECURITY: only use this token if it's still assigned to THIS user.
+          // If admin unassigned/reassigned → the saved link is stale; fall through
+          // to the email search below.
+          if (!assignedTo || assignedTo.trim() === "" || assignedTo.toLowerCase() !== userEmail) {
+            snap = null; // stale link, discard
+          } else {
+            tokenIdToLoad = tokenId;
+          }
+        } else {
+          snap = null; // token doc deleted
         }
+      }
 
+      // 2. FALLBACK: search for a token assigned to this email.
+      //    Covers:
+      //      - Admin pre-assign to a user who hasn't signed up yet (no displayName yet)
+      //      - Admin reassign to a new token (displayName still points to old one)
+      //      - Saved link was stale (unassigned/reassigned/deleted)
+      //    1 extra read only in these cases. Normal returning users skip this.
+      if (!snap) {
+        const q = query(
+          collection(db, "customers"),
+          where("assignedTo", "==", userEmail),
+          limit(1)
+        );
+        const qsnap = await getDocs(q);
+        if (!qsnap.empty) {
+          const foundDoc = qsnap.docs[0];
+          // Only accept active, non-expired tokens.
+          const data = foundDoc.data();
+          const isBlocked = (data.status || "active") !== "active";
+          let isExpired = false;
+          if (data.expiresAt) {
+            const expMillis = typeof data.expiresAt.toMillis === "function"
+              ? data.expiresAt.toMillis()
+              : data.expiresAt.seconds
+                ? data.expiresAt.seconds * 1000
+                : new Date(data.expiresAt).getTime();
+            isExpired = Date.now() > expMillis;
+          }
+          if (!isBlocked) {
+            snap = foundDoc;
+            tokenIdToLoad = foundDoc.id;
+            // One-time link: update displayName so future logins skip the search.
+            try {
+              await updateProfile(firebaseUser, { displayName: foundDoc.id });
+            } catch (err) {
+              console.error("Failed to update displayName:", err);
+            }
+            // Even if expired, we want the profile to load so the dashboard can
+            // show the "Reactivate" screen (renew flow) instead of "Choose a Plan".
+          }
+        }
+      }
+
+      // 3. Load the profile (or null if no token belongs to this user).
+      if (snap && snap.exists() && tokenIdToLoad) {
+        const data = snap.data();
         setProfile({
           uid: firebaseUser.uid,
           email: firebaseUser.email,
-          tokenId,
+          tokenId: tokenIdToLoad,
           nuvioEmail: data.nuvioEmail ?? "",
           nuvioPassword: data.nuvioPassword ?? "",
           status: data.status ?? "available",
