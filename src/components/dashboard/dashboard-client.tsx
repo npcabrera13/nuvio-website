@@ -447,18 +447,44 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
 
       // Case 1: User has NO active token (profile is null, verified-no-trial, deleted, etc.)
       // Assign a NEW token with the plan days as the expiry.
+      // Uses the server-side /api/claim-account endpoint (Firestore transaction)
+      // to eliminate the race condition where two customers pay simultaneously
+      // for the last account. Client-side assignment was last-write-wins; the
+      // transaction guarantees only one customer gets it.
       if (!profile?.tokenId) {
         (async () => {
           try {
-            await assignTokenAfterPayment(daysToAdd);
+            const userEmail = user?.email?.toLowerCase();
+            if (!userEmail) {
+              throw new Error("NO_EMAIL");
+            }
+            const res = await fetch("/api/claim-account", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: userEmail, days: daysToAdd }),
+            });
+            const data = await res.json();
+            if (!data.ok) {
+              const msg =
+                data.error === "no_accounts"    ? "All Nuvio accounts are currently taken. Please contact support for a refund." :
+                data.error === "already_active" ? "You already have an active subscription." :
+                data.error === "server"         ? "Server error. Please contact support." :
+                "Payment succeeded but account assignment failed. Please contact support for a refund.";
+              throw new Error(data.error === "no_accounts" ? "ACCOUNTS_FULL" : "CLAIM_FAILED:" + msg);
+            }
+            await refreshProfile();
             setPaymentStatus("success");
           } catch (err: any) {
-            console.error("Failed to assign token after payment:", err);
+            console.error("Failed to claim account after payment:", err);
             if (err?.message === "ACCOUNTS_FULL") {
               setPaymentStatus("failed");
               setPayError("All Nuvio accounts are currently taken. Please contact support for a refund.");
+            } else if (err?.message?.startsWith("CLAIM_FAILED:")) {
+              setPaymentStatus("failed");
+              setPayError(err.message.substring("CLAIM_FAILED:".length));
             } else {
               setPaymentStatus("failed");
+              setPayError("Payment succeeded but account assignment failed. Please contact support for a refund.");
             }
           }
         })();
