@@ -52,6 +52,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
 
     return new Response(JSON.stringify({ success: true, checkoutUrl: data.data.attributes.checkout_url, sessionId: data.data.id }), { headers: { "Content-Type": "application/json" } });
   } catch (err) {
-    return new Response(JSON.stringify({ error: "Something went wrong" }), { status: 500, headers: { "Content-Type": "application/json" } });
+    console.error("create-session error:", err);
+    return new Response(JSON.stringify({ error: "Something went wrong", detail: String(err) }), { status: 500, headers: { "Content-Type": "application/json" } });
   }
 };
