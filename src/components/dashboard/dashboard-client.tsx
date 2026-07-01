@@ -119,10 +119,18 @@ function RenewalHero({ isExpired, hasExistingToken }: { isExpired: boolean; hasE
           </span>
           <div>
             <h2 className="text-base sm:text-lg font-extrabold bg-gradient-to-r from-amber-300 via-pink-300 to-violet-300 bg-clip-text text-transparent">
-              {isExpired ? "Reactivate your account" : "Keep the magic going"}
+              {!hasExistingToken
+                ? "Choose a Plan"
+                : isExpired
+                ? "Reactivate your account"
+                : "Keep the magic going"}
             </h2>
             <p className="text-[11px] text-muted-foreground">
-              {isExpired ? "Renew now to unlock everything again" : "Don't lose access when your trial ends"}
+              {!hasExistingToken
+                ? "Pick a plan to get instant access to a Nuvio account"
+                : isExpired
+                ? "Renew now to unlock everything again"
+                : "Don't lose access when your subscription ends"}
             </p>
           </div>
         </div>
@@ -414,6 +422,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [copiedBoth, setCopiedBoth] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"processing" | "success" | "failed" | null>(null);
+  const [payError, setPayError] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoMessage, setPromoMessage] = useState("");
@@ -524,6 +533,22 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
           <div className="absolute top-1/3 -right-40 h-[26rem] w-[26rem] rounded-full bg-pink-500/10 blur-[140px] animate-float-slow" />
         </div>
         <div className="mx-auto max-w-2xl">
+          {/* Payment status banner — shows after returning from PayMongo */}
+          {paymentStatus === "processing" && (
+            <div className="mb-4 rounded-xl border border-violet-500/30 bg-violet-500/10 p-3 text-center text-sm text-violet-200">
+              Processing your payment…
+            </div>
+          )}
+          {paymentStatus === "success" && (
+            <div className="mb-4 rounded-xl border border-green-500/30 bg-green-500/10 p-3 text-center text-sm text-green-200">
+              ✓ Payment successful! Your account is now active.
+            </div>
+          )}
+          {paymentStatus === "failed" && (
+            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-center text-sm text-red-200">
+              {payError || "Payment failed. Please try again or contact support."}
+            </div>
+          )}
           <div className="text-center mb-5">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-violet-500/15 mb-4">
               <Sparkles className="h-7 w-7 text-violet-400" />
