@@ -433,6 +433,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
     const params = new URLSearchParams(window.location.search);
     const status = params.get("payment");
     const plan = params.get("plan");
+    const sessionId = params.get("session");
     if (!status || !user) return;
     // For "verified-no-trial" users, profile is null — that's OK, we handle it below
     // For existing users, we need profile.tokenId
@@ -461,14 +462,16 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
             const res = await fetch("/api/claim-account", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email: userEmail, days: daysToAdd }),
+              body: JSON.stringify({ email: userEmail, days: daysToAdd, sessionId }),
             });
             const data = await res.json();
             if (!data.ok) {
               const msg =
-                data.error === "no_accounts"    ? "All Nuvio accounts are currently taken. Please contact support for a refund." :
-                data.error === "already_active" ? "You already have an active subscription." :
-                data.error === "server"         ? "Server error. Please contact support." :
+                data.error === "no_accounts"          ? "All Nuvio accounts are currently taken. Please contact support for a refund." :
+                data.error === "already_active"       ? "You already have an active subscription." :
+                data.error === "payment_not_verified" ? "Payment could not be verified. If you paid, please contact support for a refund." :
+                data.error === "no_session"           ? "Missing payment session. Please contact support." :
+                data.error === "server"               ? "Server error. Please contact support." :
                 "Payment succeeded but account assignment failed. Please contact support for a refund.";
               throw new Error(data.error === "no_accounts" ? "ACCOUNTS_FULL" : "CLAIM_FAILED:" + msg);
             }
