@@ -440,16 +440,18 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
     const plan = params.get("plan");
     const sessionId = params.get("session");
     if (!status || !user) return;
-    // For "verified-no-trial" users, profile is null — that's OK, we handle it below
-    // For existing users, we need profile.tokenId
+    // CRITICAL: wait for profile to load before deciding Case 1 vs Case 2.
+    // If we run before profile loads, we'd wrongly pick Case 1 (new account)
+    // when the user actually has an existing token to extend.
+    if (isProfileStillLoading) return;
 
     if (status === "success" && plan) {
       setPaymentStatus("processing");
       const daysToAdd = parseInt(plan, 10);
       const now = new Date();
 
-      // Clear URL immediately to prevent infinite loop on back button
-      window.history.replaceState(null, "", "/dashboard/");
+      // Don't clear URL yet — we need it to persist until profile loads.
+      // It's cleared after the assignment/extension completes below.
 
       // Case 1: User has NO active token (profile is null, verified-no-trial, deleted, etc.)
       // Assign a NEW token with the plan days as the expiry.
@@ -482,6 +484,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
             }
             await refreshProfile();
             setPaymentStatus("success");
+            window.history.replaceState(null, "", "/dashboard/");
           } catch (err: any) {
             console.error("Failed to claim account after payment:", err);
             if (err?.message === "ACCOUNTS_FULL") {
@@ -494,6 +497,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
               setPaymentStatus("failed");
               setPayError("Payment succeeded but account assignment failed. Please contact support for a refund.");
             }
+            window.history.replaceState(null, "", "/dashboard/");
           }
         })();
       }
@@ -518,10 +522,12 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
             });
             await refreshProfile();
             setPaymentStatus("success");
+            window.history.replaceState(null, "", "/dashboard/");
           } catch (err) {
             console.error("Failed to extend subscription:", err);
             setPaymentStatus("failed");
             setPayError("Payment succeeded but we couldn't extend your subscription. Please contact support — your payment is safe.");
+            window.history.replaceState(null, "", "/dashboard/");
           }
         })();
       }
@@ -529,7 +535,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
       setPaymentStatus("failed");
       window.history.replaceState(null, "", "/dashboard/");
     }
-  }, [user, profile, refreshProfile, assignTokenAfterPayment]);
+  }, [user, profile, isProfileStillLoading, refreshProfile, assignTokenAfterPayment]);
 
   useEffect(() => {
     try {

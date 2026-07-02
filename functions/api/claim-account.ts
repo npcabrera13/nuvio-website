@@ -101,11 +101,20 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: {
 
     if (!isPaid) {
       console.error("[claim-account] Session not paid after retries:", lastPaymentStatus);
+      // TEMPORARY DEBUG: include the actual PayMongo response so we can see
+      // what status fields PayMongo returns for a paid session.
+      const debugInfo = {
+        sessionId,
+        payment_status: verifyData?.data?.attributes?.payment_status,
+        status: verifyData?.data?.attributes?.status,
+        attempts: 3,
+      };
       return new Response(
         JSON.stringify({
           ok: false,
           error: "payment_not_verified",
           message: "Payment not confirmed yet. If you paid, please wait a moment and refresh, or contact support.",
+          debug: debugInfo,
         }),
         { status: 400, headers: corsHeaders }
       );
