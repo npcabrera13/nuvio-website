@@ -94,7 +94,12 @@ export default function SignupPage() {
       router.push("/dashboard");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg === ACCOUNTS_FULL_ERROR) {
+      // Silently ignore popup cancellations — just reset the button
+      if (msg.includes("popup-closed-by-user") || msg.includes("cancelled-popup-request") || msg.includes("auth/cancel")) {
+        // User cancelled — no error message needed, just reset loading
+      } else if (msg.includes("account-exists-with-different-credential") || msg.includes("email-already-in-use")) {
+        setError("You already have an account with this email. Please log in with your password instead.");
+      } else if (msg === ACCOUNTS_FULL_ERROR) {
         setAccountsFull(true);
       } else {
         setError(msg || "Google sign-in failed. Please try again.");
