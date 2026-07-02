@@ -487,7 +487,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
               const msg =
                 data.error === "no_accounts"          ? "All Nuvio accounts are currently taken. Please contact support for a refund." :
                 data.error === "already_active"       ? "You already have an active subscription." :
-                data.error === "payment_not_verified" ? "Payment could not be verified. If you paid, please contact support for a refund." :
+                data.error === "payment_not_verified" ? (data.message || "Payment could not be verified. If you paid, please contact support for a refund.") :
                 data.error === "no_session"           ? "Missing payment session. Please contact support." :
                 data.error === "server"               ? "Server error. Please contact support." :
                 "Payment succeeded but account assignment failed. Please contact support for a refund.";

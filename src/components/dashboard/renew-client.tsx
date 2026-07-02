@@ -167,7 +167,7 @@ export function RenewClient() {
             if (!data.ok) {
               const msg =
                 data.error === "no_accounts" ? "All Nuvio accounts are currently taken. Please contact support for a refund." :
-                data.error === "payment_not_verified" ? "Payment could not be verified. If you paid, please contact support." :
+                data.error === "payment_not_verified" ? (data.message || "Payment could not be verified. If you paid, please contact support.") :
                 "Payment succeeded but account assignment failed. Please contact support.";
               throw new Error(msg);
             }

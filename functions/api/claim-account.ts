@@ -77,45 +77,51 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: {
     let verifyData: any = null;
     let isPaid = false;
     let lastPaymentStatus = "unknown";
-    for (let attempt = 0; attempt < 3; attempt++) {
+    let lastStatus = "unknown";
+    let paymentsCount = 0;
+    // Retry up to 5 times with 2s gap (10s total) — PayMongo can take a few
+    // seconds to update the session status after payment.
+    for (let attempt = 0; attempt < 5; attempt++) {
       verifyData = await retrieveSession();
       if (!verifyData) {
-        // API error — treat as not verified but keep retrying
-        await new Promise((res) => setTimeout(res, 1500));
+        await new Promise((res) => setTimeout(res, 2000));
         continue;
       }
       const a = verifyData?.data?.attributes;
-      lastPaymentStatus = a?.payment_status || "unknown";
-      // Accept any of the "paid" indicators PayMongo uses across modes.
-      // payment_status: "paid" | "unpaid" | "awaiting_payment" | "processing"
-      // status: "open" | "completed" | "expired" | "awaiting_payment"
+      lastPaymentStatus = a?.payment_status || "none";
+      lastStatus = a?.status || "none";
+      paymentsCount = Array.isArray(a?.payments) ? a.payments.length : 0;
+
+      // Check MULTIPLE signals that PayMongo might use:
+      // 1. payment_status === "paid"
+      // 2. status === "completed"
+      // 3. payments array has entries (payment was made)
+      // 4. Any payment in the array has status "paid"
+      const hasPaidPayment = Array.isArray(a?.payments) && a.payments.some((p: any) => 
+        p?.attributes?.status === "paid" || p?.attributes?.status === "succeeded"
+      );
+      
       isPaid =
         a?.payment_status === "paid" ||
         a?.status === "completed" ||
         a?.status === "paid" ||
-        // Some test-mode flows mark payments as "processing" briefly before "paid"
-        (a?.payment_status === "processing" && attempt < 2);
+        paymentsCount > 0 ||
+        hasPaidPayment;
+        
       if (isPaid) break;
-      if (attempt < 2) await new Promise((res) => setTimeout(res, 1500));
+      if (attempt < 4) await new Promise((res) => setTimeout(res, 2000));
     }
 
     if (!isPaid) {
-      console.error("[claim-account] Session not paid after retries:", lastPaymentStatus);
-      // TEMPORARY DEBUG: include the FULL PayMongo attributes so we can see
-      // exactly what fields PayMongo returns for a paid session.
-      const debugInfo = {
-        sessionId,
-        payment_status: verifyData?.data?.attributes?.payment_status,
-        status: verifyData?.data?.attributes?.status,
-        allAttributes: verifyData?.data?.attributes,
-        attempts: 3,
-      };
+      console.error("[claim-account] Session not paid after 5 retries:", { lastPaymentStatus, lastStatus, paymentsCount });
+      // Include debug info IN THE MESSAGE so the user can see it and report back
+      const debugMsg = `Debug: status=${lastStatus}, payment_status=${lastPaymentStatus}, payments=${paymentsCount}`;
       return new Response(
         JSON.stringify({
           ok: false,
           error: "payment_not_verified",
-          message: "Payment not confirmed yet. If you paid, please wait a moment and refresh, or contact support.",
-          debug: debugInfo,
+          message: `Payment could not be verified. ${debugMsg}. Please contact support.`,
+          debug: { sessionId, status: lastStatus, payment_status: lastPaymentStatus, payments: paymentsCount },
         }),
         { status: 400, headers: corsHeaders }
       );
