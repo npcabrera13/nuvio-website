@@ -12,7 +12,7 @@ import {
   Heart, Star, Home, Play, Flame, Bookmark, BookmarkCheck,
   Search, Zap, ArrowRight, CheckCircle2, Users
 } from "lucide-react";
-import { Timestamp, doc, updateDoc } from "firebase/firestore";
+import { Timestamp, doc, updateDoc, getDoc } from "firebase/firestore";
 
 // ═══════════════════════════════════════════════════════════════
 // CIRCULAR COUNTDOWN — compact, with glow
@@ -226,7 +226,11 @@ function RenewalHero({ isExpired, hasExistingToken }: { isExpired: boolean; hasE
             ) : (
               <>
                 <Sparkles className="h-4 w-4" />
-                {isExpired ? "Reactivate now" : `Continue for ₱${plan.price}`}
+                {!hasExistingToken
+                  ? `Continue for ₱${plan.price}`
+                  : isExpired
+                  ? "Reactivate now"
+                  : `Continue for ₱${plan.price}`}
                 <ArrowRight className="h-4 w-4" />
               </>
             )}
@@ -426,6 +430,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
   const [promoCode, setPromoCode] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoMessage, setPromoMessage] = useState("");
+  const [showNuvioPopup, setShowNuvioPopup] = useState(false);
 
   // Handle PayMongo payment redirect: /dashboard?payment=success&plan=30
   useEffect(() => {
@@ -493,12 +498,20 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
         })();
       }
       // Case 2: User already has a token — extend the expiry.
+      // IMPORTANT: refresh the profile FIRST so we use the current expiry
+      // (the profile state may be stale from before the PayMongo redirect).
       else if (profile?.tokenId) {
-        const currentExpiry = profile.expiresAt ? profile.expiresAt.toDate() : now;
-        const base = currentExpiry.getTime() > now.getTime() ? currentExpiry : now;
-        const newExpiry = new Date(base.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
         (async () => {
           try {
+            // Re-fetch the latest profile to avoid stale expiry
+            const freshSnap = await getDoc(doc(db, "customers", profile.tokenId));
+            if (!freshSnap.exists()) {
+              throw new Error("TOKEN_GONE");
+            }
+            const freshData = freshSnap.data();
+            const freshExpiry = freshData.expiresAt?.toDate?.() ?? null;
+            const base = (freshExpiry && freshExpiry.getTime() > now.getTime()) ? freshExpiry : now;
+            const newExpiry = new Date(base.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
             await updateDoc(doc(db, "customers", profile.tokenId), {
               expiresAt: Timestamp.fromDate(newExpiry),
               status: "active",
@@ -508,6 +521,7 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
           } catch (err) {
             console.error("Failed to extend subscription:", err);
             setPaymentStatus("failed");
+            setPayError("Payment succeeded but we couldn't extend your subscription. Please contact support — your payment is safe.");
           }
         })();
       }
@@ -545,137 +559,25 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
     }
   }, [loading, user, router]);
 
+  // If user has no active token, redirect to /renew (separate page)
+  // — keeps the dashboard focused on active accounts only.
+  useEffect(() => {
+    if (!loading && !isProfileStillLoading && user) {
+      if (!user.displayName || user.displayName === "verified-no-trial" || !profile || !profile.tokenId || !profile.nuvioEmail) {
+        router.replace("/renew");
+      }
+    }
+  }, [loading, isProfileStillLoading, user, profile, router]);
+
+  // Still handle PayMongo redirects on /dashboard (for existing users extending)
+  // — the /renew page handles its own redirects too.
   if (loading || !user || isProfileStillLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-violet-400" /></div>;
   }
 
-  // UNIFIED "Choose a Plan" screen — shows for ALL cases where user has no active token:
-  // - No displayName (new user, hasn't verified)
-  // - displayName === "verified-no-trial"
-  // - No profile (deleted/unassigned/reassigned)
-  // - No profile.tokenId or profile.nuvioEmail
+  // If we somehow get here with no profile, show a redirecting state
   if (!user.displayName || user.displayName === "verified-no-trial" || !profile || !profile.tokenId || !profile.nuvioEmail) {
-    return (
-      <main className="min-h-screen pt-20 pb-12 px-3 sm:px-4 lg:px-6 relative">
-        <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -left-40 h-[30rem] w-[30rem] rounded-full bg-violet-600/12 blur-[140px] animate-float" />
-          <div className="absolute top-1/3 -right-40 h-[26rem] w-[26rem] rounded-full bg-pink-500/10 blur-[140px] animate-float-slow" />
-        </div>
-        <div className="mx-auto max-w-2xl">
-          {/* Payment status banner — shows after returning from PayMongo */}
-          {paymentStatus === "processing" && (
-            <div className="mb-4 rounded-xl border border-violet-500/30 bg-violet-500/10 p-3 text-center text-sm text-violet-200">
-              Processing your payment…
-            </div>
-          )}
-          {paymentStatus === "success" && (
-            <div className="mb-4 rounded-xl border border-green-500/30 bg-green-500/10 p-3 text-center text-sm text-green-200">
-              ✓ Payment successful! Your account is now active.
-            </div>
-          )}
-          {paymentStatus === "failed" && (
-            <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-center text-sm text-red-200">
-              {payError || "Payment failed. Please try again or contact support."}
-            </div>
-          )}
-          <div className="text-center mb-5">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-violet-500/15 mb-4">
-              <Sparkles className="h-7 w-7 text-violet-400" />
-            </div>
-            <h1 className="text-xl sm:text-2xl font-bold mb-2">Choose a Plan</h1>
-            <p className="text-sm text-muted-foreground">
-              Pick a plan below to get instant access to a Nuvio account.
-            </p>
-            <p className="text-xs text-amber-400 mt-2 font-medium">
-              ⚠️ Don&apos;t see the email? Check your spam/junk folder.
-            </p>
-          </div>
-
-          {/* Pricing plans */}
-          <RenewalHero isExpired={true} hasExistingToken={false} />
-
-          {/* Promo code section */}
-          <div className="nuvio-solid-card rounded-2xl p-4 sm:p-5 mt-4">
-            <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
-              <Gift className="h-4 w-4 text-pink-400" /> Have a promo code?
-            </h3>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
-                placeholder="Enter promo code"
-                className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-500/40"
-                disabled={promoLoading}
-              />
-              <button
-                onClick={async () => {
-                  if (!promoCode.trim()) return;
-                  setPromoLoading(true);
-                  setPromoMessage("");
-                  try {
-                    const result = await redeemPromoCode(promoCode);
-                    setPromoMessage(result.message);
-                    if (result.success) {
-                      setPromoCode("");
-                      setTimeout(() => window.location.reload(), 1500);
-                    }
-                  } catch {
-                    setPromoMessage("Failed to redeem promo code. Try again.");
-                  } finally {
-                    setPromoLoading(false);
-                  }
-                }}
-                disabled={promoLoading || !promoCode.trim()}
-                className="nuvio-gradient-bg rounded-xl px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50 active:scale-95 transition"
-              >
-                {promoLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Redeem"}
-              </button>
-            </div>
-            {promoMessage && (
-              <p className={`mt-2 text-xs ${promoMessage.includes("redeemed") ? "text-green-400" : "text-red-400"}`}>
-                {promoMessage}
-              </p>
-            )}
-          </div>
-
-          {/* Resend verification + logout */}
-          <div className="text-center mt-4 space-y-2">
-            <button
-              onClick={async () => {
-                const btn = document.getElementById("resend-btn-2");
-                if (btn) { btn.textContent = "Sending…"; btn.setAttribute("disabled", "true"); }
-                try {
-                  await resendVerificationEmail();
-                  if (btn) {
-                    btn.textContent = "Email sent! Check inbox + spam";
-                    setTimeout(() => { if (btn) { btn.textContent = "Resend verification email"; btn.removeAttribute("disabled"); } }, 3000);
-                  }
-                } catch (err) {
-                  const msg = err instanceof Error ? err.message : "";
-                  if (msg === "already-verified" && btn) {
-                    btn.textContent = "Already verified! Reloading…";
-                    setTimeout(() => window.location.reload(), 1500);
-                  } else if (btn) {
-                    btn.textContent = "Failed";
-                    setTimeout(() => { if (btn) { btn.textContent = "Resend verification email"; btn.removeAttribute("disabled"); } }, 3000);
-                  }
-                }
-              }}
-              id="resend-btn-2"
-              className="text-xs text-violet-400 hover:text-violet-300 font-medium transition"
-            >
-              Resend verification email
-            </button>
-            <div>
-              <button onClick={signOut} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition">
-                <LogOut className="h-3 w-3" /> Log out
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-violet-400" /></div>;
   }
 
   const isExpired = profile.expiresAt ? profile.expiresAt.toDate().getTime() < Date.now() : false;
@@ -773,13 +675,72 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
         )}
 
         {/* ─── GO TO NUVIO.TV (prominent with logo) ─── */}
-        <a href="https://nuvio.tv" target="_blank" rel="noopener noreferrer" className="relative overflow-hidden rounded-2xl p-5 flex items-center justify-center gap-4 transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-violet-900/40 mb-5 animate-pulse-slow" style={{ background: "linear-gradient(135deg, #7c3aed, #ec4899)" }}>
+        <button
+          onClick={() => setShowNuvioPopup(true)}
+          className="relative overflow-hidden rounded-2xl p-5 flex items-center justify-center gap-4 transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-violet-900/40 mb-5 animate-pulse-slow w-full"
+          style={{ background: "linear-gradient(135deg, #7c3aed, #ec4899)" }}
+        >
           <img src="https://nuvio.tv/assets/Logo_1080x1080.png" alt="Nuvio" className="h-10 w-10 rounded-lg shrink-0" />
           <div className="text-center">
             <span className="block text-lg font-extrabold text-white">Go to nuvio.tv</span>
             <span className="block text-[10px] text-white/70">Start streaming now →</span>
           </div>
-        </a>
+        </button>
+
+        {/* ─── NUVIO.TV CREDENTIALS POPUP ─── */}
+        {showNuvioPopup && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setShowNuvioPopup(false)}>
+            <div
+              className="nuvio-solid-card rounded-2xl p-5 sm:p-6 max-w-md w-full relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowNuvioPopup(false)}
+                className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5"
+              >
+                ×
+              </button>
+              <div className="flex items-center gap-2 mb-4">
+                <img src="https://nuvio.tv/assets/Logo_1080x1080.png" alt="Nuvio" className="h-8 w-8 rounded-lg" />
+                <h3 className="text-base font-bold">Copy your credentials</h3>
+              </div>
+              <p className="text-xs text-muted-foreground mb-4">
+                You&apos;ll need these to log in at nuvio.tv. Copy them now, then click the button below to go straight to the login page.
+              </p>
+              <div className="space-y-2 mb-4">
+                <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Nuvio email</p>
+                  <p className="text-sm font-mono break-all">{profile.nuvioEmail}</p>
+                </div>
+                <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Nuvio password</p>
+                  <p className="text-sm font-mono break-all">{profile.nuvioPassword || "••••••••"}</p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`Email: ${profile.nuvioEmail}\nPassword: ${profile.nuvioPassword}`);
+                    setCopiedBoth(true);
+                    setTimeout(() => setCopiedBoth(false), 2000);
+                  }}
+                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 text-sm font-semibold flex items-center justify-center gap-1.5 hover:bg-white/[0.08] transition"
+                >
+                  {copiedBoth ? <><Check className="h-4 w-4 text-green-400" /> Copied!</> : <><Copy className="h-4 w-4" /> Copy email + password</>}
+                </button>
+                <a
+                  href="https://nuvio.tv/account/login"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full rounded-xl py-2.5 text-sm font-extrabold text-white text-center flex items-center justify-center gap-1.5 transition-transform active:scale-95"
+                  style={{ background: "linear-gradient(135deg, #7c3aed, #ec4899)" }}
+                >
+                  Go to login <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ─── LIVE CHANNELS ─── */}
         <div className="mb-5">

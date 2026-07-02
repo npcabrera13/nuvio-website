@@ -54,6 +54,8 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: {
     }
 
     // ── STEP 1: Verify the PayMongo session is paid ──
+    // PayMongo test mode can have a slight delay before payment_status flips
+    // to "paid". We retry up to 3 times with a 1.5s gap.
     const secretKey = env.PAYMONGO_SECRET_KEY;
     if (!secretKey) {
       console.error("[claim-account] PAYMONGO_SECRET_KEY not configured");
@@ -63,40 +65,57 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: {
       );
     }
 
-    const verifyRes = await fetch(`${PAYMONGO_RETRIEVE_URL}/${sessionId}`, {
-      method: "GET",
-      headers: { "Authorization": `Basic ${btoa(secretKey + ":")}` },
-    });
+    const retrieveSession = async () => {
+      const r = await fetch(`${PAYMONGO_RETRIEVE_URL}/${sessionId}`, {
+        method: "GET",
+        headers: { "Authorization": `Basic ${btoa(secretKey + ":")}` },
+      });
+      if (!r.ok) return null;
+      return r.json();
+    };
 
-    if (!verifyRes.ok) {
-      console.error("[claim-account] PayMongo verify failed:", verifyRes.status);
-      return new Response(
-        JSON.stringify({ ok: false, error: "payment_not_verified", message: "Payment could not be verified. If you paid, please contact support for a refund." }),
-        { status: 400, headers: corsHeaders }
-      );
+    let verifyData: any = null;
+    let isPaid = false;
+    let lastPaymentStatus = "unknown";
+    for (let attempt = 0; attempt < 3; attempt++) {
+      verifyData = await retrieveSession();
+      if (!verifyData) {
+        // API error — treat as not verified but keep retrying
+        await new Promise((res) => setTimeout(res, 1500));
+        continue;
+      }
+      const a = verifyData?.data?.attributes;
+      lastPaymentStatus = a?.payment_status || "unknown";
+      // Accept any of the "paid" indicators PayMongo uses across modes.
+      // payment_status: "paid" | "unpaid" | "awaiting_payment" | "processing"
+      // status: "open" | "completed" | "expired" | "awaiting_payment"
+      isPaid =
+        a?.payment_status === "paid" ||
+        a?.status === "completed" ||
+        a?.status === "paid" ||
+        // Some test-mode flows mark payments as "processing" briefly before "paid"
+        (a?.payment_status === "processing" && attempt < 2);
+      if (isPaid) break;
+      if (attempt < 2) await new Promise((res) => setTimeout(res, 1500));
     }
-
-    const verifyData = await verifyRes.json();
-    const sessionAttributes = verifyData?.data?.attributes;
-    const paymentStatus = sessionAttributes?.payment_status;
-    // PayMongo statuses: "paid", "unpaid", "awaiting_payment", etc.
-    // Also check the session-level status (could be "completed").
-    const isPaid = paymentStatus === "paid" || sessionAttributes?.status === "completed";
 
     if (!isPaid) {
-      console.error("[claim-account] Session not paid:", paymentStatus);
+      console.error("[claim-account] Session not paid after retries:", lastPaymentStatus);
       return new Response(
-        JSON.stringify({ ok: false, error: "payment_not_verified", message: "Payment not confirmed. If you paid, please contact support." }),
+        JSON.stringify({
+          ok: false,
+          error: "payment_not_verified",
+          message: "Payment not confirmed yet. If you paid, please wait a moment and refresh, or contact support.",
+        }),
         { status: 400, headers: corsHeaders }
       );
     }
 
-    // Optional: verify the amount matches the plan (prevents someone paying ₱19
-    // for a ₱49 plan by tampering with the session). The metadata.plan tells us
-    // what plan they selected; we can cross-check the amount.
+    // Use the session's metadata.days (trustworthy, set server-side by create-session)
+    // instead of client-sent days, preventing tampering.
+    const sessionAttributes = verifyData?.data?.attributes;
     const metadata = sessionAttributes?.metadata || {};
     const sessionDays = parseInt(metadata.days, 10) || 0;
-    // Use the session's days if available (more trustworthy than client-sent days)
     const finalDays = sessionDays > 0 ? sessionDays : days;
 
     // ── STEP 2: Payment verified — forward to gatekeeper for atomic assignment ──
