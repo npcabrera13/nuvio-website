@@ -204,7 +204,11 @@ function RenewalHero({ isExpired, hasExistingToken }: { isExpired: boolean; hasE
                 body: JSON.stringify({ plan: plan.id }),
               });
               const data = await res.json();
-              if (data.checkoutUrl) {
+              if (data.checkoutUrl && data.sessionId) {
+                // Store sessionId in sessionStorage BEFORE redirecting to PayMongo.
+                // PayMongo's {CHECKOUT_SESSION_ID} URL template doesn't work reliably,
+                // so we store it here and retrieve it after the redirect.
+                try { sessionStorage.setItem("paymongo_session_id", data.sessionId); } catch {}
                 window.location.href = data.checkoutUrl;
               } else {
                 setPayError(data.error || "Failed to start payment");
@@ -438,7 +442,14 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
     const params = new URLSearchParams(window.location.search);
     const status = params.get("payment");
     const plan = params.get("plan");
-    const sessionId = params.get("session");
+    // Get sessionId from sessionStorage (reliable) — fallback to URL param
+    // (PayMongo's {CHECKOUT_SESSION_ID} template doesn't always work)
+    let sessionId = params.get("session");
+    if (!sessionId || sessionId === "{CHECKOUT_SESSION_ID}") {
+      try { sessionId = sessionStorage.getItem("paymongo_session_id"); } catch {}
+    }
+    // Clear the stored sessionId so it can't be reused
+    try { sessionStorage.removeItem("paymongo_session_id"); } catch {}
     if (!status || !user) return;
     // CRITICAL: wait for profile to load before deciding Case 1 vs Case 2.
     // If we run before profile loads, we'd wrongly pick Case 1 (new account)

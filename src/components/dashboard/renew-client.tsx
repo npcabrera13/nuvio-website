@@ -86,7 +86,8 @@ function RenewalHero({ isExpired, hasExistingToken }: { isExpired: boolean; hasE
                 body: JSON.stringify({ plan: plan.id }),
               });
               const data = await res.json();
-              if (data.checkoutUrl) {
+              if (data.checkoutUrl && data.sessionId) {
+                try { sessionStorage.setItem("paymongo_session_id", data.sessionId); } catch {}
                 window.location.href = data.checkoutUrl;
               } else {
                 setPayError(data.error || "Failed to start payment");
@@ -137,7 +138,11 @@ export function RenewClient() {
     const params = new URLSearchParams(window.location.search);
     const status = params.get("payment");
     const plan = params.get("plan");
-    const sessionId = params.get("session");
+    let sessionId = params.get("session");
+    if (!sessionId || sessionId === "{CHECKOUT_SESSION_ID}") {
+      try { sessionId = sessionStorage.getItem("paymongo_session_id"); } catch {}
+    }
+    try { sessionStorage.removeItem("paymongo_session_id"); } catch {}
     if (!status || !user) return;
 
     if (status === "success" && plan) {
