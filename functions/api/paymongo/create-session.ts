@@ -37,7 +37,7 @@ export const onRequestPost = async ({ request, env }: { request: Request; env: E
             currency: "PHP",
             line_items: [{ name: selectedPlan.description, amount: selectedPlan.price, currency: "PHP", quantity: 1 }],
             payment_method_types: ["gcash", "card", "atome", "dob", "dob_ubp"],
-            success_url: `${baseUrl}/dashboard?payment=success&plan=${plan}&session={CHECKOUT_SESSION_ID}`,
+            success_url: `${baseUrl}/renew?payment=success&plan=${plan}&session={CHECKOUT_SESSION_ID}`,
             failed_url: `${baseUrl}/dashboard?payment=failed`,
             metadata: { plan, days: String(selectedPlan.days) },
           },

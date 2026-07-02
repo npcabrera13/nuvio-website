@@ -132,7 +132,7 @@ export function RenewClient() {
   const [payError, setPayError] = useState("");
   const router = useRouter();
 
-  // Handle PayMongo payment redirect on /renew too
+  // Handle PayMongo payment redirect on /renew
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -142,14 +142,17 @@ export function RenewClient() {
     if (!sessionId || sessionId === "{CHECKOUT_SESSION_ID}") {
       try { sessionId = sessionStorage.getItem("paymongo_session_id"); } catch {}
     }
-    try { sessionStorage.removeItem("paymongo_session_id"); } catch {}
     if (!status || !user) return;
+    // CRITICAL: wait for profile to load before deciding Case 1 vs Case 2
+    if (profileLoading) return;
 
     if (status === "success" && plan) {
       setPaymentStatus("processing");
       const daysToAdd = parseInt(plan, 10);
-      window.history.replaceState(null, "", "/renew/");
+      const now = new Date();
+      // Don't clear URL yet — clear after the handler completes
 
+      // Case 1: User has NO active token → claim a NEW account
       if (!profile?.tokenId) {
         (async () => {
           try {
@@ -168,25 +171,65 @@ export function RenewClient() {
                 "Payment succeeded but account assignment failed. Please contact support.";
               throw new Error(msg);
             }
+            try { sessionStorage.removeItem("paymongo_session_id"); } catch {}
             await refreshProfile();
             setPaymentStatus("success");
+            window.history.replaceState(null, "", "/renew/");
             setTimeout(() => router.push("/dashboard"), 1500);
           } catch (err: any) {
+            try { sessionStorage.removeItem("paymongo_session_id"); } catch {}
             setPaymentStatus("failed");
             setPayError(err?.message || "Payment failed. Please contact support.");
+            window.history.replaceState(null, "", "/renew/");
+          }
+        })();
+      }
+      // Case 2: User already has a token → extend the expiry
+      else if (profile?.tokenId) {
+        (async () => {
+          try {
+            const { getDoc, doc, updateDoc, Timestamp } = await import("firebase/firestore");
+            const { db } = await import("@/lib/firebase");
+            const freshSnap = await getDoc(doc(db, "customers", profile.tokenId));
+            if (!freshSnap.exists()) throw new Error("TOKEN_GONE");
+            const freshData = freshSnap.data();
+            const freshExpiry = freshData.expiresAt?.toDate?.() ?? null;
+            const base = (freshExpiry && freshExpiry.getTime() > now.getTime()) ? freshExpiry : now;
+            const newExpiry = new Date(base.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+            await updateDoc(doc(db, "customers", profile.tokenId), {
+              expiresAt: Timestamp.fromDate(newExpiry),
+              status: "active",
+            });
+            try { sessionStorage.removeItem("paymongo_session_id"); } catch {}
+            await refreshProfile();
+            setPaymentStatus("success");
+            window.history.replaceState(null, "", "/renew/");
+            setTimeout(() => router.push("/dashboard"), 1500);
+          } catch (err: any) {
+            try { sessionStorage.removeItem("paymongo_session_id"); } catch {}
+            setPaymentStatus("failed");
+            setPayError("Payment succeeded but we couldn't extend your subscription. Please contact support.");
+            window.history.replaceState(null, "", "/renew/");
           }
         })();
       }
     } else if (status === "failed") {
       setPaymentStatus("failed");
+      try { sessionStorage.removeItem("paymongo_session_id"); } catch {}
       window.history.replaceState(null, "", "/renew/");
     }
-  }, [user, profile, refreshProfile, router]);
+  }, [user, profile, profileLoading, refreshProfile, router]);
 
-  // If user has an active profile, redirect to /dashboard
+  // Redirect to /dashboard if user has an active profile — BUT NOT when
+  // we're processing a payment (payment params in URL).
   useEffect(() => {
     if (!loading && !profileLoading && profile?.tokenId && profile?.nuvioEmail) {
-      router.replace("/dashboard");
+      // Don't redirect if we're handling a payment redirect
+      const params = new URLSearchParams(window.location.search);
+      const status = params.get("payment");
+      if (!status) {
+        router.replace("/dashboard");
+      }
     }
   }, [loading, profileLoading, profile, router]);
 
