@@ -576,11 +576,17 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
     }
   }, [loading, user, router]);
 
-  // If user has no active token, redirect to /renew (separate page)
+  // If user has no active token (or pre-assigned with no expiry), redirect to /renew
   // — keeps the dashboard focused on active accounts only.
+  // Pre-assigned tokens (expiresAt: null) need the user to pay/redeem to start the clock.
   useEffect(() => {
     if (!loading && !isProfileStillLoading && user) {
-      if (!user.displayName || user.displayName === "verified-no-trial" || !profile || !profile.tokenId || !profile.nuvioEmail) {
+      const hasNoProfile = !user.displayName || user.displayName === "verified-no-trial" || !profile || !profile.tokenId || !profile.nuvioEmail;
+      const hasPreAssignedNoExpiry = profile?.tokenId && profile?.nuvioEmail && !profile.expiresAt;
+      // Don't redirect if we're handling a payment redirect
+      const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      const isPaymentRedirect = params?.get("payment");
+      if (!isPaymentRedirect && (hasNoProfile || hasPreAssignedNoExpiry)) {
         router.replace("/renew");
       }
     }

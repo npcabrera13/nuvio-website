@@ -220,10 +220,11 @@ export function RenewClient() {
     }
   }, [user, profile, profileLoading, refreshProfile, router]);
 
-  // Redirect to /dashboard if user has an active profile — BUT NOT when
-  // we're processing a payment (payment params in URL).
+  // Redirect to /dashboard ONLY if user has an active token WITH a valid expiry.
+  // Pre-assigned tokens (expiresAt: null) should stay on /renew so the user
+  // can pay/redeem to start their subscription.
   useEffect(() => {
-    if (!loading && !profileLoading && profile?.tokenId && profile?.nuvioEmail) {
+    if (!loading && !profileLoading && profile?.tokenId && profile?.nuvioEmail && profile?.expiresAt) {
       // Don't redirect if we're handling a payment redirect
       const params = new URLSearchParams(window.location.search);
       const status = params.get("payment");
