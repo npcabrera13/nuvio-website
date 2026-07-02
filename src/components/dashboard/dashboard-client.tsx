@@ -595,6 +595,23 @@ export function DashboardClient({ movies, series }: { movies: NuvioMovie[]; seri
       </div>
 
       <div className="mx-auto max-w-6xl">
+        {/* ─── PAYMENT STATUS BANNER (for existing users renewing) ─── */}
+        {paymentStatus === "processing" && (
+          <div className="mb-4 rounded-xl border border-violet-500/30 bg-violet-500/10 p-3 text-center text-sm text-violet-200">
+            Processing your payment…
+          </div>
+        )}
+        {paymentStatus === "success" && (
+          <div className="mb-4 rounded-xl border border-green-500/30 bg-green-500/10 p-3 text-center text-sm text-green-200">
+            ✓ Payment successful! Your subscription has been extended.
+          </div>
+        )}
+        {paymentStatus === "failed" && (
+          <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-center text-sm text-red-200">
+            {payError || "Payment failed. Please try again or contact support."}
+          </div>
+        )}
+
         {/* ─── TOP BAR ─── */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3 min-w-0">

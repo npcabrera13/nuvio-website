@@ -47,7 +47,7 @@ export function Referral() {
   };
 
   const shareLink = async () => {
-    const text = `I'm saving ₱2,600/month on streaming with Nuvio — all my movies, series, and 27 live channels for just ₱49/month. Use my referral code ${code} to get 7 days free! 💜`;
+    const text = `I'm saving ₱2,600/month on streaming with Nuvio — all my movies, series, and 27 live channels for just ₱49/month. Use my referral code ${code} when you sign up! 💜`;
     if (navigator.share) {
       navigator.share({ title: "Nuvio — all your streaming, one app", text, url: link }).catch(() => {});
     } else {
@@ -74,10 +74,10 @@ export function Referral() {
                 Refer &amp; earn
               </p>
               <h2 className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight">
-                Give 7 days free, get 7 days free
+                Share Nuvio with friends
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Share your referral link with friends. When they start their free trial, you both get an extra 7 days — free.
+                Share your referral link with friends. When they sign up, you both can earn bonus days on your subscription.
               </p>
             </div>
           </div>

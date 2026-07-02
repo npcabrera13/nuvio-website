@@ -121,7 +121,7 @@ function VerifyContent() {
               <h1 className="text-2xl font-bold mb-2">Email verified! 🎉</h1>
               <p className="text-sm text-muted-foreground mb-4">
                 <Sparkles className="inline h-4 w-4 text-pink-400 mr-1" />
-                Your 7-day free trial is now active. Redirecting to your dashboard…
+                Your email is verified. Redirecting to choose your plan…
               </p>
               <p className="text-xs text-muted-foreground/70">
                 Not redirecting?{" "}

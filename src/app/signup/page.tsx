@@ -185,7 +185,7 @@ export default function SignupPage() {
           </div>
           <h1 className="text-2xl font-bold mb-2">Check your inbox</h1>
           <p className="text-sm text-muted-foreground mb-3">
-            We sent a verification link to <span className="font-semibold text-foreground">{email}</span>. Click it to unlock your 7-day free trial.
+            We sent a verification link to <span className="font-semibold text-foreground">{email}</span>. Click it to verify your email and choose a plan.
           </p>
           <p className="text-xs text-amber-400 mb-6 font-medium">
             ⚠️ Don&apos;t see it? Check your spam/junk folder.
@@ -216,10 +216,10 @@ export default function SignupPage() {
             <span className="text-2xl font-bold tracking-tight">Nuvio</span>
           </Link>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            Start your 7 days free
+            Create your account
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            No credit card required. Cancel anytime.
+            No credit card required to sign up. Pick a plan after verifying your email.
           </p>
         </div>
 
@@ -317,7 +317,7 @@ export default function SignupPage() {
                   <Loader2 className="h-4 w-4 animate-spin" /> Creating account…
                 </>
               ) : (
-                "Create account & start free trial"
+                "Create account"
               )}
             </button>
           </form>

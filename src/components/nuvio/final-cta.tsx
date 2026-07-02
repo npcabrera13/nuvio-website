@@ -16,7 +16,7 @@ export function FinalCta() {
             Ready to start watching?
           </h2>
           <p className="mt-4 text-base sm:text-lg text-white/85 max-w-xl mx-auto">
-            Join 2,400+ users streaming everything for ₱49/month. Create your account and start your 7-day free trial — no credit card needed.
+            Join 2,400+ users streaming everything for ₱49/month. Create your account today — no credit card needed to sign up.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">

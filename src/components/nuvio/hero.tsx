@@ -88,7 +88,7 @@ export function Hero({ movies, onOpenMovie }: HeroProps) {
               className="nuvio-gradient-bg nuvio-glow inline-flex items-center justify-center gap-2 rounded-xl px-6 py-4 text-base font-semibold text-white transition-transform hover:scale-[1.03] active:scale-95"
             >
               <Play className="h-5 w-5 fill-current" />
-              Get 7 Days Free
+              Get Started
             </a>
             <a
               href="#pricing"

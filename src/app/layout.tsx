@@ -14,7 +14,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Nuvio — All your streaming. One app. ₱49/month.",
   description:
-    "Nuvio bundles Netflix, Disney+, HBO Max, Prime Video and live channels into one streaming app. 7 days free, no credit card. From ₱49/month.",
+    "Nuvio bundles Netflix, Disney+, HBO Max, Prime Video and live channels into one streaming app. From ₱49/month. No credit card needed to sign up.",
   keywords: [
     "Nuvio",
     "streaming",
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Nuvio — All your streaming. One app.",
-    description: "Netflix + Disney+ + HBO + live channels. ₱49/month. 7 days free.",
+    description: "Netflix + Disney+ + HBO + live channels. ₱49/month. Sign up free, no credit card needed.",
     siteName: "Nuvio",
     type: "website",
     images: ["https://nuvio.tv/assets/Logo_1080x1080.png"],
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Nuvio — All your streaming. One app.",
-    description: "₱49/month. 7 days free, no credit card.",
+    description: "₱49/month. No credit card needed to sign up.",
     images: ["https://nuvio.tv/assets/Logo_1080x1080.png"],
   },
 };
@@ -54,7 +54,7 @@ const jsonLd = {
   "@type": "Product",
   name: "Nuvio Streaming Bundle",
   description:
-    "All-in-one streaming app bundling movies, series, anime, and live channels. From ₱49/month with a 7-day free trial.",
+    "All-in-one streaming app bundling movies, series, anime, and live channels. From ₱49/month.",
   brand: { "@type": "Brand", name: "Nuvio" },
   logo: "https://nuvio.tv/assets/Logo_1080x1080.png",
   offers: {

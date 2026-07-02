@@ -33,7 +33,7 @@ export function MobileStickyCta() {
       <div className="nuvio-glass border-t border-white/10 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">7 days free · no card</p>
+            <p className="text-xs text-muted-foreground">No credit card to sign up</p>
             <p className="text-sm font-bold leading-tight">
               From <span className="nuvio-gradient-text">₱49/month</span>
             </p>

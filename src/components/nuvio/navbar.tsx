@@ -81,7 +81,7 @@ export function Navbar({ onOpenMovie }: NavbarProps) {
             href="/signup"
             className="nuvio-gradient-bg nuvio-glow inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-transform hover:scale-[1.03] active:scale-95"
           >
-            Get 7 Days Free
+            Get Started
             <Play className="h-3.5 w-3.5 fill-current" />
           </a>
         </div>
@@ -94,7 +94,7 @@ export function Navbar({ onOpenMovie }: NavbarProps) {
             href="/signup"
             className="nuvio-gradient-bg inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white active:scale-95 transition-transform"
           >
-            7 Days Free
+            Sign Up
           </a>
           <button
             type="button"
@@ -137,7 +137,7 @@ export function Navbar({ onOpenMovie }: NavbarProps) {
             onClick={() => setOpen(false)}
             className="nuvio-gradient-bg mt-1 inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-base font-semibold text-white"
           >
-            Get 7 Days Free
+            Get Started
             <Play className="h-4 w-4 fill-current" />
           </a>
         </div>
